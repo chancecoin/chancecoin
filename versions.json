@@ -1,0 +1,10 @@
+{
+	"minimum_client_version": 1.0,
+	"protocol_changes": [
+		{
+			"block_index": 0,
+			"minimum_database_version": 1.0,
+			"description": "initial version"
+		}
+	]
+}
