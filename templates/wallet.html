@@ -1,0 +1,64 @@
+{% extends "template.html" %}
+
+{% block title %}Wallet{% end %}
+
+{% block content %}
+		<div class="pure-g-r section">
+			<div class="pure-u-1">
+			  {% if updated==False %}
+				<p class="warning">Warning: Chancecoin is not finished synchronizing with the network.</p>
+				{% end %}
+			</div>
+		</div>
+		<div class="pure-g-r section">
+			<div class="pure-u-1-4 segment">
+					<h2>Balance</h2>
+					<form class="pure-form pure-form-stacked" action="/wallet" method="post">
+					    <fieldset>
+					        <input type="hidden" name="form" value="balance">
+					        
+					        <input type="text" placeholder="address" name="address">
+					        <button type="submit" class="pure-button pure-button-primary">Get balance</button>
+					    </fieldset>
+					</form>
+					{% if wallet!=None %}
+					<p>{{ wallet }}</p>
+					{% end %}
+			</div>
+			<div class="pure-u-1-4 segment">
+					<h2>Burn</h2>
+					<form class="pure-form pure-form-stacked" action="/wallet" method="post">
+					    <fieldset>
+					        <input type="hidden" name="form" value="burn">
+
+					        <label>Source address</label>
+					        <input type="text" placeholder="source address" name="source">
+					
+					        <label>Quantity</label>
+					        <input type="text" placeholder="quantity" name="quantity">
+
+					        <button type="submit" class="pure-button pure-button-primary">Burn</button>
+					    </fieldset>
+					</form>
+			</div>
+			<div class="pure-u-1-4 segment">
+					<h2>Send</h2>
+					<form class="pure-form pure-form-stacked" action="/wallet" method="post">
+					    <fieldset>
+					        <input type="hidden" name="form" value="send">
+
+					        <label>Source address</label>
+					        <input type="text" placeholder="source address" name="source">
+					
+					        <label>Destination address</label>
+					        <input type="text" placeholder="destination address" name="destination">
+
+					        <label>Quantity</label>
+					        <input type="text" placeholder="quantity" name="quantity">
+
+					        <button type="submit" class="pure-button pure-button-primary">Send</button>
+					    </fieldset>
+					</form>
+			</div>
+		</div>
+{% end %}

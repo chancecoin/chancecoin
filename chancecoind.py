@@ -25,7 +25,7 @@ import configparser
 
 # Units
 from lib import (config, api, util, exceptions, bitcoin, blocks)
-from lib import (send, order, btcpay, issuance, broadcast, bet, dividend, burn, cancel, callback)
+from lib import (send, order, btcpay, bet, burn, cancel)
 if os.name == 'nt':
     from lib import util_windows
 
@@ -48,7 +48,7 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
 
     # Configuration file
     configfile = configparser.ConfigParser()
-    config_path = os.path.join(config.DATA_DIR, 'chancecoin.conf')
+    config_path = os.path.join(config.DATA_DIR, config.CONFIG_FILENAME)
     configfile.read(config_path)
     has_config = 'Default' in configfile
     #logging.debug("Config file: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
@@ -58,24 +58,18 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
         config.TESTNET = testnet
     elif has_config and 'testnet' in configfile['Default']:
         config.TESTNET = configfile['Default'].getboolean('testnet')
-    else:
-        config.TESTNET = False
 
     # testcoin
     if testcoin:
         config.TESTCOIN = testcoin
     elif has_config and 'testcoin' in configfile['Default']:
         config.TESTCOIN = configfile['Default'].getboolean('testcoin')
-    else:
-        config.TESTCOIN = False
 
     # Bitcoind RPC host
     if bitcoind_rpc_connect:
         config.BITCOIND_RPC_CONNECT = bitcoind_rpc_connect
     elif has_config and 'bitcoind-rpc-connect' in configfile['Default'] and configfile['Default']['bitcoind-rpc-connect']:
         config.BITCOIND_RPC_CONNECT = configfile['Default']['bitcoind-rpc-connect']
-    else:
-        config.BITCOIND_RPC_CONNECT = 'localhost'
 
     # Bitcoind RPC port
     if bitcoind_rpc_port:
@@ -84,9 +78,9 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
         config.BITCOIND_RPC_PORT = configfile['Default']['bitcoind-rpc-port']
     else:
         if config.TESTNET:
-            config.BITCOIND_RPC_PORT = '18332'
+            config.BITCOIND_RPC_PORT = config.BITCOIND_RPC_PORT_TESTNET
         else:
-            config.BITCOIND_RPC_PORT = '8332'
+            config.BITCOIND_RPC_PORT = config.BITCOIND_RPC_PORT_LIVE
     try:
         int(config.BITCOIND_RPC_PORT)
         assert int(config.BITCOIND_RPC_PORT) > 1 and int(config.BITCOIND_RPC_PORT) < 65535
@@ -98,8 +92,6 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
         config.BITCOIND_RPC_USER = bitcoind_rpc_user
     elif has_config and 'bitcoind-rpc-user' in configfile['Default'] and configfile['Default']['bitcoind-rpc-user']:
         config.BITCOIND_RPC_USER = configfile['Default']['bitcoind-rpc-user']
-    else:
-        config.BITCOIND_RPC_USER = 'bitcoinrpc'
 
     # Bitcoind RPC password
     if bitcoind_rpc_password:
@@ -116,8 +108,6 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
         config.RPC_HOST = rpc_host
     elif has_config and 'rpc-host' in configfile['Default'] and configfile['Default']['rpc-host']:
         config.RPC_HOST = configfile['Default']['rpc-host']
-    else:
-        config.RPC_HOST = 'localhost'
 
     # RPC port
     if rpc_port:
@@ -126,9 +116,9 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
         config.RPC_PORT = configfile['Default']['rpc-port']
     else:
         if config.TESTNET:
-            config.RPC_PORT = '14000'
+            config.RPC_PORT = config.RPC_PORT_TESTNET
         else:
-            config.RPC_PORT = '4000'
+            config.RPC_PORT = config.RPC_PORT_LIVE
     try:
         int(config.RPC_PORT)
         assert int(config.RPC_PORT) > 1 and int(config.RPC_PORT) < 65535
@@ -140,8 +130,6 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
         config.RPC_USER = rpc_user
     elif has_config and 'rpc-user' in configfile['Default'] and configfile['Default']['rpc-user']:
         config.RPC_USER = configfile['Default']['rpc-user']
-    else:
-        config.RPC_USER = 'rpc'
 
     # RPC password
     if rpc_password:
@@ -158,15 +146,15 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
         config.LOG = configfile['Default']['logfile']
     else:
         if config.TESTNET:
-            config.LOG = os.path.join(config.DATA_DIR, 'chancecoind.testnet.log')
+            config.LOG = os.path.join(config.DATA_DIR, config.DATA_DIR_TESTNET)
         else:
-            config.LOG = os.path.join(config.DATA_DIR, 'chancecoind.log')
+            config.LOG = os.path.join(config.DATA_DIR, config.DATA_DIR_LIVE)
 
     if not unittest:
         if config.TESTCOIN:
-            config.PREFIX = b'CH'                   # 2 bytes (possibly accidentally created)
+            config.PREFIX = config.PREFIX_TESTCOIN
         else:
-            config.PREFIX = b'CHANCECO'             # 8 bytes
+            config.PREFIX = config.PREFIX_LIVECOIN
     else:
         config.PREFIX = config.UNITTEST_PREFIX
 
@@ -177,7 +165,7 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
         config.DATABASE = database_file
     else:
         config.DB_VERSION_MAJOR
-        config.DATABASE = os.path.join(config.DATA_DIR, 'chancecoind.' + str(config.DB_VERSION_MAJOR) + '.db')
+        config.DATABASE = os.path.join(config.DATA_DIR, config.DATABASE_NAME_PREFIX + '.' + str(config.DB_VERSION_MAJOR) + '.db')
 
     # (more) Testnet
     if config.TESTNET:
@@ -185,85 +173,30 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
             config.ADDRESSVERSION = b'\x6f'
             config.BLOCK_FIRST = 154908
             config.BURN_START = 154908
-            config.BURN_END = 4017708   # Fifty years, at ten minutes per block.
-            config.UNSPENDABLE = 'mvChancecoinXXXXXXXXXXXXXXXXW24Hef'
+            config.BURN_END = 4017708
+            config.UNSPENDABLE = config.UNSPENDABLE_TESTNET_TESTCOIN
         else:
             config.ADDRESSVERSION = b'\x6f'
             config.BLOCK_FIRST = 154908
             config.BURN_START = 154908
-            config.BURN_END = 4017708   # Fifty years, at ten minutes per block.
-            config.UNSPENDABLE = 'mvChancecoinXXXXXXXXXXXXXXXXW24Hef'
+            config.BURN_END = 4017708
+            config.UNSPENDABLE = config.UNSPENDABLE_TESTNET_LIVECOIN
     else:
         if config.TESTCOIN:
             config.ADDRESSVERSION = b'\x00'
             config.BLOCK_FIRST = 288270
             config.BURN_START = 288310
-            config.BURN_END = 2500000   # A long time.
-            config.UNSPENDABLE = '1ChancecoinXXXXXXXXXXXXXXXXXUWLpVr'
+            config.BURN_END = 2500000
+            config.UNSPENDABLE = config.UNSPENDABLE_LIVE_TESTCOIN
         else:
             config.ADDRESSVERSION = b'\x00'
             config.BLOCK_FIRST = 287270
             config.BURN_START = 288310
             config.BURN_END = 293810
-            config.UNSPENDABLE = '1ChancecoinXXXXXXXXXXXXXXXXXUWLpVr'
+            config.UNSPENDABLE = config.UNSPENDABLE_LIVE_LIVECOIN
 
     # Headless operation
     config.HEADLESS = headless
-
-def market (give_asset, get_asset):
-
-    # Your Pending Orders Matches.
-    awaiting_btcs = util.get_order_matches(db, validity='pending', is_mine=True)
-    table = PrettyTable(['Matched Order ID', 'Time Left'])
-    for order_match in awaiting_btcs:
-        order_match = format_order_match(db, order_match)
-        table.add_row(order_match)
-    print('Your Pending Order Matches')
-    print(table)
-    print('\n')
-
-    # Open orders.
-    orders = util.get_orders(db, validity='valid', show_expired=False, show_empty=False)
-    table = PrettyTable(['Give Quantity', 'Give Asset', 'Price', 'Price Assets', 'Required BTC Fee', 'Provided BTC Fee', 'Time Left', 'Tx Hash'])
-    for order in orders:
-        if give_asset and order['give_asset'] != give_asset: continue
-        if get_asset and order['get_asset'] != get_asset: continue
-        order = format_order(order)
-        table.add_row(order)
-    print('Open Orders')
-    table = table.get_string(sortby='Price')
-    print(table)
-    print('\n')
-
-    # Open bets.
-    bets = util.get_bets(db, validity='valid', show_empty=False)
-    table = PrettyTable(['Bet Type', 'Feed Address', 'Deadline', 'Target Value', 'Leverage', 'Wager', 'Odds', 'Time Left', 'Tx Hash'])
-    for bet in bets:
-        bet = format_bet(bet)
-        table.add_row(bet)
-    print('Open Bets')
-    print(table)
-    print('\n')
-
-    # Feeds
-    broadcasts = util.get_broadcasts(db, validity='valid', order_by='timestamp', order_dir='desc')
-    table = PrettyTable(['Feed Address', 'Timestamp', 'Text', 'Value', 'Fee Multiplier'])
-    seen_addresses = []
-    for broadcast in broadcasts:
-        # Only show feeds with broadcasts in the last two weeks.
-        last_block_time = util.last_block(db)['block_time']
-        if broadcast['timestamp'] + config.TWO_WEEKS < last_block_time:
-            continue
-        # Always show only the latest broadcast from a feed address.
-        if broadcast['source'] not in seen_addresses:
-            feed = format_feed(broadcast)
-            table.add_row(feed)
-            seen_addresses.append(broadcast['source'])
-        else:
-            continue
-    print('Feeds')
-    print(table)
-
 
 def balances (address):
     def get_btc_balance(address):
@@ -287,47 +220,6 @@ def balances (address):
         table.add_row([asset, amount])
     print('Balances')
     print(table.get_string())
-
-def format_order (order):
-    give_amount = util.devise(db, D(order['give_amount']), order['give_asset'], 'output')
-    get_amount = util.devise(db, D(order['get_amount']), order['get_asset'], 'output')
-    give_remaining = util.devise(db, D(order['give_remaining']), order['give_asset'], 'output')
-    get_remaining = util.devise(db, D(order['get_remaining']), order['get_asset'], 'output')
-    give_asset = order['give_asset']
-    get_asset = order['get_asset']
-
-    if get_asset < give_asset:
-        price = util.devise(db, D(order['get_amount']) / D(order['give_amount']), 'price', 'output')
-        price_assets = get_asset + '/' + give_asset + ' ask'
-    else:
-        price = util.devise(db, D(order['give_amount']) / D(order['get_amount']), 'price', 'output')
-        price_assets = give_asset + '/' + get_asset + ' bid'
-
-    return [D(give_remaining), give_asset, price, price_assets, str(order['fee_required'] / config.UNIT), str(order['fee_provided'] / config.UNIT), order['expire_index'] - util.last_block(db)['block_index'], order['tx_hash']]
-
-def format_bet (bet):
-    odds = D(bet['counterwager_amount']) / D(bet['wager_amount'])
-
-    if not bet['target_value']: target_value = None
-    else: target_value = bet['target_value']
-    if not bet['leverage']: leverage = None
-    else: leverage = util.devise(db, D(bet['leverage']) / 5040, 'leverage', 'output')
-
-    return [util.BET_TYPE_NAME[bet['bet_type']], bet['feed_address'], util.isodt(bet['deadline']), target_value, leverage, str(bet['wager_remaining'] / config.UNIT) + ' XCP', util.devise(db, odds, 'odds', 'output'), bet['expire_index'] - util.last_block(db)['block_index'], bet['tx_hash']]
-
-def format_order_match (db, order_match):
-    order_match_id = order_match['tx0_hash'] + order_match['tx1_hash']
-    order_match_time_left = order_match['match_expire_index'] - util.last_block(db)['block_index']
-    return [order_match_id, order_match_time_left]
-
-def format_feed (feed):
-    timestamp = util.isodt(feed['timestamp'])
-    if not feed['text']:
-        text = '<Locked>'
-    else:
-        text = feed['text']
-    return [feed['source'], timestamp, text, feed['value'], D(feed['fee_multiplier']) / D(1e8)]
-
 
 if __name__ == '__main__':
     if os.name == 'nt':
@@ -383,23 +275,6 @@ if __name__ == '__main__':
     parser_btcpay= subparsers.add_parser('btcpay', help='create and broadcast a *BTCpay* message, to settle an Order Match for which you owe BTC')
     parser_btcpay.add_argument('--order-match-id', required=True, help='the concatenation of the hashes of the two transactions which compose the order match')
 
-    parser_issuance = subparsers.add_parser('issuance', help='issue a new asset, issue more of an existing asset or transfer the ownership of an asset')
-    parser_issuance.add_argument('--source', required=True, help='the source address')
-    parser_issuance.add_argument('--transfer-destination', help='for transfer of ownership of asset issuance rights')
-    parser_issuance.add_argument('--quantity', required=True, help='the quantity of ASSET to be issued')
-    parser_issuance.add_argument('--asset', required=True, help='the name of the asset to be issued (if it\'s available)')
-    parser_issuance.add_argument('--divisible', action='store_true', help='whether or not the asset is divisible (must agree with previous issuances)')
-    parser_issuance.add_argument('--callable', dest='callable_', action='store_true', help='whether or not the asset is callable (must agree with previous issuances)')
-    parser_issuance.add_argument('--call-date', help='the date from which a callable asset may be called back (must agree with previous issuances)')
-    parser_issuance.add_argument('--call-price', help='the price, in XCP per whole unit, at which a callable asset may be called back (must agree with previous issuances)')
-    parser_issuance.add_argument('--description', type=str, required=True, help='a description of the asset')
-
-    parser_broadcast = subparsers.add_parser('broadcast', help='broadcast textual and numerical information to the network')
-    parser_broadcast.add_argument('--source', required=True, help='the source address')
-    parser_broadcast.add_argument('--text', type=str, required=True, help='the textual part of the broadcast')
-    parser_broadcast.add_argument('--value', type=float, default=0, help='numerical value of the broadcast')
-    parser_broadcast.add_argument('--fee-multiplier', required=True, help='how much of every bet on this feed should go to its operator; a fraction of 1, (i.e. .05 is five percent)')
-
     parser_bet = subparsers.add_parser('bet', help='offer to make a bet on the value of a feed')
     parser_bet.add_argument('--source', required=True, help='the source address')
     parser_bet.add_argument('--feed-address', required=True, help='the address which publishes the feed to bet on')
@@ -411,11 +286,6 @@ if __name__ == '__main__':
     parser_bet.add_argument('--leverage', type=int, default=5040, help='leverage, as a fraction of 5040')
     parser_bet.add_argument('--expiration', type=int, required=True, help='the number of blocks for which the bet should be valid')
 
-    parser_dividend = subparsers.add_parser('dividend', help='pay dividends to the holders of an asset (in proportion to their stake in it)')
-    parser_dividend.add_argument('--source', required=True, help='the source address')
-    parser_dividend.add_argument('--quantity-per-unit', required=True, help='the quantity of XCP to be paid per whole unit held of ASSET')
-    parser_dividend.add_argument('--asset', required=True, help='the asset to which pay dividends')
-
     parser_burn = subparsers.add_parser('burn', help='destroy bitcoins to earn XCP, during an initial period of time')
     parser_burn.add_argument('--source', required=True, help='the source address')
     parser_burn.add_argument('--quantity', required=True, help='quantity of BTC to be destroyed')
@@ -423,32 +293,15 @@ if __name__ == '__main__':
     parser_cancel= subparsers.add_parser('cancel', help='cancel an open order or bet you created')
     parser_cancel.add_argument('--offer-hash', required=True, help='the transaction hash of the order or bet')
 
-    parser_callback = subparsers.add_parser('callback', help='callback a fraction of an asset')
-    parser_callback.add_argument('--source', required=True, help='the source address')
-    parser_callback.add_argument('--fraction', required=True, help='the fraction of ASSET to call back')
-    parser_callback.add_argument('--asset', required=True, help='the asset to callback')
-
     parser_address = subparsers.add_parser('balances', help='display the balances of a Chancecoin address')
     parser_address.add_argument('address', help='the address you are interested in')
 
-    parser_asset = subparsers.add_parser('asset', help='display the basic properties of a Chancecoin asset')
-    parser_asset.add_argument('asset', help='the asset you are interested in')
-
     parser_wallet = subparsers.add_parser('wallet', help='list the addresses in your Bitcoind wallet along with their balances in all Chancecoin assets')
-
-    parser_market = subparsers.add_parser('market', help='fill the screen with an always up-to-date summary of the Chancecoin market')
-    parser_market.add_argument('--give-asset', help='only show orders offering to sell GIVE_ASSET')
-    parser_market.add_argument('--get-asset', help='only show orders offering to buy GET_ASSET')
 
     parser_reparse = subparsers.add_parser('reparse', help='reparse all transactions in the database (WARNING: not thread‐safe)')
 
     parser_rollback = subparsers.add_parser('rollback', help='rollback database (WARNING: not thread‐safe)')
     parser_rollback.add_argument('block_index', type=int, help='the index of the last known good block')
-
-    """
-    parser_checksum = subparsers.add_parser('checksum', help='create an asset name from a base string')
-    parser_checksum.add_argument('string', help='base string of the desired asset name')
-    """
 
     args = parser.parse_args()
 
@@ -532,31 +385,6 @@ if __name__ == '__main__':
         unsigned_tx_hex = btcpay.create(db, args.order_match_id, unsigned=args.unsigned)
         print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
 
-    elif args.action == 'issuance':
-        quantity = util.devise(db, args.quantity, None, 'input',
-                               divisible=args.divisible)
-        if args.callable_:
-            if not args.call_date:
-                parser.error('must specify call date of callable asset', )
-            if not args.call_price:
-                parser.error('must specify call price of callable asset')
-            call_date = calendar.timegm(dateutil.parser.parse(args.call_date).utctimetuple())
-            call_price = float(args.call_price)
-        else:
-            call_date, call_price = 0, 0
-
-        unsigned_tx_hex = issuance.create(db, args.source,
-                                          args.transfer_destination,
-                                          args.asset, quantity, args.divisible, args.callable_, call_date, call_price, args.description, unsigned=args.unsigned)
-        print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
-
-    elif args.action == 'broadcast':
-        value = util.devise(db, args.value, 'value', 'input')
-        unsigned_tx_hex = broadcast.create(db, args.source, int(time.time()),
-                                           value, util.devise(db, args.fee_multiplier, 'fracton', 'input'),
-                                           args.text, unsigned=args.unsigned)
-        print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
-
     elif args.action == 'bet':
         deadline = calendar.timegm(dateutil.parser.parse(args.deadline).utctimetuple())
         wager = util.devise(db, args.wager, 'XCP', 'input')
@@ -570,12 +398,6 @@ if __name__ == '__main__':
                                      leverage, args.expiration, unsigned=args.unsigned)
         print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
 
-    elif args.action == 'dividend':
-        quantity_per_unit = util.devise(db, args.quantity_per_unit, 'XCP', 'input')
-        unsigned_tx_hex = dividend.create(db, args.source, quantity_per_unit,
-                                   args.asset, unsigned=args.unsigned)
-        print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
-
     elif args.action == 'burn':
         quantity = util.devise(db, args.quantity, 'BTC', 'input')
         unsigned_tx_hex = burn.create(db, args.source, quantity, unsigned=args.unsigned)
@@ -583,11 +405,6 @@ if __name__ == '__main__':
 
     elif args.action == 'cancel':
         unsigned_tx_hex = cancel.create(db, args.offer_hash, unsigned=args.unsigned)
-        print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
-
-    elif args.action == 'callback':
-        unsigned_tx_hex = callback.create(db, args.source, util.devise(db, args.fraction, 'fraction', 'input'),
-                                   args.asset, unsigned=args.unsigned)
         print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
 
     elif args.action == 'balances':
@@ -603,40 +420,14 @@ if __name__ == '__main__':
         if args.asset == 'XCP':
             total = util.devise(db, util.xcp_supply(db), args.asset, 'output')
             divisible = True
-            issuer = None
-            callable_ = None
-            call_date = None
-            call_price = None
-            description = None
         elif args.asset == 'BTC':
             total = None
             divisible = True
-            issuer = None
-            callable_ = None
-            call_date = None
-            call_price = None
-            description = None
-        else:
-            issuances = util.get_issuances(db, validity='valid', asset=args.asset)
-            total = sum([issuance['amount'] for issuance in issuances])
-            total = util.devise(db, total, args.asset, 'output')
-            divisible = bool(issuances[-1]['divisible'])
-            issuer = issuances[-1]['issuer'] # Issuer of last issuance.
-            callable_ = None
-            call_date = issuances[-1]['call_date']
-            call_price = issuances[-1]['call_price']
-            description = issuances[-1]['description']
 
         asset_id = util.get_asset_id(args.asset)
         print('Asset Name:', args.asset)
         print('Asset ID:', asset_id)
         print('Total Issued:', total)
-        print('Divisible:', divisible)
-        print('Issuer:', issuer)
-        print('Callable:', callable_)
-        print('Call Date:', util.isodt(call_date) if call_date else call_date)
-        print('Call Price:', str(call_price) + ' XCP' if call_price else call_price)
-        print('Description:', description)
 
     elif args.action == 'wallet':
         total_table = PrettyTable(['Asset', 'Balance'])
@@ -674,9 +465,6 @@ if __name__ == '__main__':
         print('TOTAL')
         print(total_table.get_string())
         print()
-
-    elif args.action == 'market':
-        market(args.give_asset, args.get_asset)
 
     elif args.action == 'reparse':
         blocks.reparse(db)

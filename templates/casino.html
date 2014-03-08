@@ -1,0 +1,42 @@
+{% extends "template.html" %}
+
+{% block title %}Casino{% end %}
+
+{% block content %}
+		<div class="pure-g-r section">
+			<div class="pure-u-1">
+			  {% if updated==False %}
+				<p class="warning">Warning: Chancecoin is not finished synchronizing with the network.</p>
+				{% end %}
+			</div>
+		</div>
+		<div class="pure-g-r section padding-bottom">
+			<div class="pure-u-1">
+				<h1>Options</h1>
+
+				<table class="pure-table pure-table-bordered">
+				    <thead>
+				        <tr>
+				            <th>Bet</th>
+				        </tr>
+				    </thead>
+				
+				    <tbody>
+				    		{% for bet in bets %}
+				        <tr>
+				            <td>Bet</td>
+				        </tr>
+				        {% end %}
+				    </tbody>
+				</table>
+			</div>
+		</div>
+		
+		<div class="pure-g-r section">
+				<div class="pure-u-1">
+						<h1>Total supply</h1>
+						<p>{{ supply }} CHA</p>
+				</div>
+		</div>
+
+{% end %}
