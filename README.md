@@ -2,7 +2,7 @@
 * v1.0—initial release
 
 # Description
-Chancecoin is a protocol for trading options in a decentralized, trustless fashion. 
+Chancecoin is a protocol for betting on dice rolls in a decentralized, trustless fashion. 
 It uses Bitcoin as a transport layer. The contents of this repository, `chancecoind`, 
 constitute the reference implementation of the protocol.
 
@@ -16,8 +16,7 @@ The Chancecoin protocol specification may be found at
 
 # Installation
 
-*NOTE: This section covers manual installation of chancecoind. If you want more of
-an automated approach to chancecoind installation for Windows and Linux, see [this link](http://chancecoind-build.readthedocs.org/en/latest/).*
+*NOTE: This section covers manual installation of chancecoind.
 
 In order for chancecoind to function, it must be able to communicate with a
 running instance of Bitcoind or Bitcoin-Qt, which handles many Bitcoin‐specific
