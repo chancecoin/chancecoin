@@ -94,8 +94,8 @@ def parse (db, tx, message):
             sql='update bets set validity = :validity where tx_hash = :tx_hash'
             cursor.execute(sql, bindings)
 
-            util.credit(db, tx['block_index'], tx['source'], 'XCP', bet['wager_remaining'])
-            util.credit(db, tx['block_index'], tx['source'], 'XCP', round(bet['wager_amount'] * bet['fee_multiplier'] / 1e8))
+            util.credit(db, tx['block_index'], tx['source'], 'CHA', bet['wager_remaining'])
+            util.credit(db, tx['block_index'], tx['source'], 'CHA', round(bet['wager_amount'] * bet['fee_multiplier'] / 1e8))
         # If neither order or bet, mark as invalid.
         else:
             validity = 'invalid: no valid offer with that hash from that address'

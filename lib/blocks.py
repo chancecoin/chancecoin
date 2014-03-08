@@ -13,7 +13,7 @@ D = decimal.Decimal
 import logging
 
 from . import (config, exceptions, util, bitcoin)
-from . import (send, order, btcpay, issuance, broadcast, bet, dividend, burn, cancel, callback)
+from . import (send, order, btcpay, bet, burn, cancel)
 
 def parse_tx (db, tx):
     parse_tx_cursor = db.cursor()
@@ -623,6 +623,7 @@ def follow (db):
         # Get new blocks.
         block_count = bitcoin.rpc('getblockcount', [])
         while block_index <= block_count:
+            print('Block: {}'.format(str(block_index)))
             logging.info('Block: {}'.format(str(block_index)))
             block_hash = bitcoin.rpc('getblockhash', [block_index])
             block = bitcoin.rpc('getblock', [block_hash])

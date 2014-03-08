@@ -38,9 +38,12 @@ body {
 }
 .splash .splash-head {
 	font-size: 3em;
+	line-height: 1em;
 }
 .splash .splash-subhead {
 	color: #999;
+	font-size: 1.5em;
+	line-height: 1em;
 }
 .splash .splash-image {
 	float: left;
@@ -62,10 +65,27 @@ body {
 .section {
 	border-bottom: 1px solid #ccc;	
 	padding-right: 1em;	
-	padding-left: 1em;		
+	padding-left: 1em;	
+}
+
+.padding-bottom {
+	padding-bottom: 1em;	
 }
 
 .segment {
 	text-align: center;
 	padding-right: 1em;	
+}
+
+.inline {
+	margin-right: 0.5em;
+	vertical-align: middle;
+}
+
+.warning {
+	background: #fcc;
+}
+
+fieldset, input {
+	display: inline-block
 }

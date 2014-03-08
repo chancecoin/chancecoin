@@ -17,9 +17,9 @@ def validate (db, source, give_asset, give_amount, get_asset, get_amount, expira
         problems.append('trading an asset for itself')
     if not give_amount or not get_amount:
         problems.append('zero give or zero get')
-    if give_asset not in ('BTC', 'XCP') and not util.get_issuances(db, validity='valid', asset=give_asset):
+    if give_asset not in ('BTC', 'CHA') and not util.get_issuances(db, validity='valid', asset=give_asset):
         problems.append('no such asset to give ({})'.format(give_asset))
-    if get_asset not in ('BTC', 'XCP') and not util.get_issuances(db, validity='valid', asset=get_asset):
+    if get_asset not in ('BTC', 'CHA') and not util.get_issuances(db, validity='valid', asset=get_asset):
         problems.append('no such asset to get ({})'.format(get_asset))
     if expiration > config.MAX_EXPIRATION:
         problems.append('maximum expiration time exceeded')

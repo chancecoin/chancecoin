@@ -142,21 +142,21 @@ def test_burn ():
     output_new[inspect.stack()[0][3]] = unsigned_tx_hex
 
 def test_send ():
-    unsigned_tx_hex = send.create(db, source_default, destination_default, small, 'XCP')
+    unsigned_tx_hex = send.create(db, source_default, destination_default, small, 'CHA')
 
     parse_hex(unsigned_tx_hex)
 
     output_new[inspect.stack()[0][3]] = unsigned_tx_hex
 
-def test_order_buy_xcp ():
-    unsigned_tx_hex = order.create(db, source_default, 'BTC', small, 'XCP', small * 2, expiration, 0, fee_provided)
+def test_order_buy_cha ():
+    unsigned_tx_hex = order.create(db, source_default, 'BTC', small, 'CHA', small * 2, expiration, 0, fee_provided)
 
     parse_hex(unsigned_tx_hex)
 
     output_new[inspect.stack()[0][3]] = unsigned_tx_hex
 
-def test_order_sell_xcp ():
-    unsigned_tx_hex = order.create(db, source_default, 'XCP', round(small * 2.1), 'BTC', small, expiration, fee_required, config.MIN_FEE)
+def test_order_sell_cha ():
+    unsigned_tx_hex = order.create(db, source_default, 'CHA', round(small * 2.1), 'BTC', small, expiration, fee_required, config.MIN_FEE)
 
     parse_hex(unsigned_tx_hex)
 
@@ -269,7 +269,7 @@ def test_broadcast_equal ():
     output_new[inspect.stack()[0][3]] = unsigned_tx_hex
 
 def test_order_to_be_cancelled ():
-    unsigned_tx_hex = order.create(db, source_default, 'BBBB', small, 'XCP', small, expiration, 0, config.MIN_FEE)
+    unsigned_tx_hex = order.create(db, source_default, 'BBBB', small, 'CHA', small, expiration, 0, config.MIN_FEE)
 
     parse_hex(unsigned_tx_hex)
 

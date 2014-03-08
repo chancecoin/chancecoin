@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 
-"""Burn BTC to earn XCP during a special period of time."""
+"""Burn BTC to earn CHA during a special period of time."""
 
 import struct
 import decimal
@@ -38,7 +38,6 @@ def create (db, source, quantity, overburn=False, unsigned=False):
     already_burned = sum([burn['burned'] for burn in burns])
     if quantity > (1 * config.UNIT - already_burned) and not overburn:
         raise exceptions.BurnError('1 BTC may be burned per address')
-
     return bitcoin.transaction(source, destination, quantity, config.MIN_FEE, None, unsigned=unsigned)
 
 def parse (db, tx, message=None):
@@ -74,8 +73,8 @@ def parse (db, tx, message=None):
         if config.PREFIX == config.UNITTEST_PREFIX:
             earned = 1500 * burned
 
-        # Credit source address with earned XCP.
-        util.credit(db, tx['block_index'], tx['source'], 'XCP', earned, event=tx['tx_hash'])
+        # Credit source address with earned CHA.
+        util.credit(db, tx['block_index'], tx['source'], 'CHA', earned, event=tx['tx_hash'])
     else:
         burned = 0
         earned = 0

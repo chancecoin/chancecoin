@@ -7,7 +7,7 @@ in transaction outputs.
 For CFD leverage, 1x = 5040, 2x = 10080, etc.: 5040 is a superior highly
 composite number and a colossally abundant number, and has 1-10, 12 as factors.
 
-All wagers are in XCP.
+All wagers are in CHA.
 """
 
 import struct
@@ -75,9 +75,9 @@ def create (db, source, feed_address, bet_type, deadline, wager_amount,
 
     # Check for sufficient funds.
     fee_multiplier = get_fee_multiplier(db, feed_address)
-    balances = util.get_balances(db, address=source, asset='XCP')
+    balances = util.get_balances(db, address=source, asset='CHA')
     if not balances or balances[0]['amount']/(1 + fee_multiplier / 1e8) < wager_amount :
-        raise exceptions.BetError('insufficient funds to both make wager and pay feed fee (in XCP)')
+        raise exceptions.BetError('insufficient funds to both make wager and pay feed fee (in CHA)')
 
     problems = validate(db, source, feed_address, bet_type, deadline, wager_amount,
                         counterwager_amount, target_value, leverage, expiration)
@@ -113,7 +113,7 @@ def parse (db, tx, message):
         except: pass
 
         # Overbet
-        balances = util.get_balances(db, address=tx['source'], asset='XCP')
+        balances = util.get_balances(db, address=tx['source'], asset='CHA')
         if not balances: wager_amount = 0
         elif balances[0]['amount']/(1 + fee_multiplier / 1e8) < wager_amount:
             wager_amount = min(round(balances[0]['amount']/(1 + fee_multiplier / 1e8)), wager_amount)
@@ -128,8 +128,8 @@ def parse (db, tx, message):
     if validity == 'valid':
         fee_multiplier = get_fee_multiplier(db, feed_address)
         fee = round(wager_amount * fee_multiplier / 1e8)    # round?!
-        util.debit(db, tx['block_index'], tx['source'], 'XCP', wager_amount)
-        util.debit(db, tx['block_index'], tx['source'], 'XCP', fee)
+        util.debit(db, tx['block_index'], tx['source'], 'CHA', wager_amount)
+        util.debit(db, tx['block_index'], tx['source'], 'CHA', fee)
 
     # Add parsed transaction to message-type–specific table.
     bindings = {
@@ -309,7 +309,7 @@ def expire (db, block_index, block_time):
         sql='update bets set validity = :validity where tx_index = :tx_index'
         cursor.execute(sql, bindings)
 
-        util.credit(db, block_index, bet['source'], 'XCP', round(bet['wager_remaining'] * (1 + bet['fee_multiplier'] / 1e8)))
+        util.credit(db, block_index, bet['source'], 'CHA', round(bet['wager_remaining'] * (1 + bet['fee_multiplier'] / 1e8)))
 
         # Record bet expiration.
         bindings = {
@@ -325,9 +325,9 @@ def expire (db, block_index, block_time):
     cursor.execute('''SELECT * FROM bet_matches \
                       WHERE (validity = ? AND deadline < ?)''', ('valid', block_time - config.TWO_WEEKS))
     for bet_match in cursor.fetchall():
-        util.credit(db, block_index, bet_match['tx0_address'], 'XCP',
+        util.credit(db, block_index, bet_match['tx0_address'], 'CHA',
                     round(bet_match['forward_amount'] * (1 + bet_match['fee_multiplier'] / 1e8)))
-        util.credit(db, block_index, bet_match['tx1_address'], 'XCP',
+        util.credit(db, block_index, bet_match['tx1_address'], 'CHA',
                     round(bet_match['backward_amount'] * (1 + bet_match['fee_multiplier'] / 1e8)))
 
         # Update validity of bet match.

@@ -18,8 +18,8 @@ from . import (config, exceptions, bitcoin)
 b26_digits = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 # Obsolete in Python 3.4, with enum module.
-BET_TYPE_NAME = {0: 'BullCFD', 1: 'BearCFD', 2: 'Equal', 3: 'NotEqual', 4: 'LongCall', 5: 'ShortCall', 6: 'LongPut', 7: 'ShortPut'}
-BET_TYPE_ID = {'BullCFD': 0, 'BearCFD': 1, 'Equal': 2, 'NotEqual': 3, 'LongCall': 4, 'ShortCall': 5, 'LongPut': 6, 'ShortPut': 7}
+BET_TYPE_NAME = {0: 'RollHigh', 1: 'RollLow'}
+BET_TYPE_ID = {'RollHigh': 0, 'RollLow': 1}
 DO_FILTER_OPERATORS = {
     '==': operator.eq,
     '!=': operator.ne,
@@ -38,7 +38,7 @@ def log (db, command, category, bindings):
 
     def output (amount, asset):
         try:
-            if asset not in ('price', 'fee_multiplier', 'odds', 'leverage'):
+            if asset not in ('price', 'fee_multiplier', 'odds'):
                 return str(devise(db, amount, asset, 'output')) + ' ' + asset
             else:
                 return str(devise(db, amount, asset, 'output'))
@@ -126,37 +126,6 @@ def log (db, command, category, bindings):
         elif category == 'btcpays':
             logging.info('BTC Payment: {} paid {} to {} for order match {} ({}) [{}]'.format(bindings['source'], output(bindings['btc_amount'], 'BTC'), bindings['destination'], bindings['order_match_id'], bindings['tx_hash'], bindings['validity']))
 
-        elif category == 'issuances':
-            if bindings['transfer']:
-                logging.info('Issuance: {} transferred asset {} to {} ({}) [{}]'.format(bindings['source'], bindings['asset'], bindings['issuer'], bindings['tx_hash'], bindings['validity']))
-            elif not bindings['amount']:
-                logging.info('Issuance: {} locked asset {} ({}) [{}]'.format(bindings['issuer'], bindings['asset'], bindings['tx_hash'], bindings['validity']))
-            else:
-                if bindings['divisible']:
-                    divisibility = 'divisible'
-                    unit = config.UNIT
-                else:
-                    divisibility = 'indivisible'
-                    unit = 1
-                if bindings['callable'] and (bindings['block_index'] > 283271 or config.TESTNET):
-                    callability = 'callable from {} for {} XCP/{}'.format(isodt(bindings['call_date']), bindings['call_price'], bindings['asset'])
-                else:
-                    callability = 'uncallable'
-                try:
-                    amount = devise(db, bindings['amount'], None, dest='output', divisible=bindings['divisible'])
-                except:
-                    amount = '?'
-                logging.info('Issuance: {} created {} of asset {}, which is {} and {}, with description ‘{}’ ({}) [{}]'.format(bindings['issuer'], amount, bindings['asset'], divisibility, callability, bindings['description'], bindings['tx_hash'], bindings['validity']))
-
-        elif category == 'broadcasts':
-            if not bindings['text']:
-                logging.info('Broadcast: {} locked his feed ({}) [{}]'.format(bindings['source'], bindings['tx_hash'], bindings['validity']))
-            else:
-                if not bindings['value']: infix = '‘{}’'.format(bindings['text'])
-                else: infix = '‘{}’ = {}'.format(bindings['text'], bindings['value'])
-                suffix = ' from ' + bindings['source'] + ' at ' + isodt(bindings['timestamp']) + ' with a fee of {}%'.format(output(D(bindings['fee_multiplier']) * D(100), 'fee_multiplier')) + ' (' + bindings['tx_hash'] + ')' + ' [{}]'.format(bindings['validity'])
-                logging.info('Broadcast: {}'.format(infix + suffix))
-
         elif category == 'bets':
             placeholder = ''
             if bindings['target_value']:    # 0.0 is not a valid target value.
@@ -167,7 +136,7 @@ def log (db, command, category, bindings):
 
             fee = round(bindings['wager_amount'] * bindings['fee_multiplier'] / 1e8)    # round?!
 
-            logging.info('Bet: {} on {} at {} for {} against {} at {} odds in {} blocks{} for a fee of {} ({}) [{}]'.format(BET_TYPE_NAME[bindings['bet_type']], bindings['feed_address'], isodt(bindings['deadline']), output(bindings['wager_amount'], 'XCP'), output(bindings['counterwager_amount'], 'XCP'), output(odds, 'odds'), bindings['expiration'], placeholder, output(fee, 'XCP'), bindings['tx_hash'], bindings['validity']))
+            logging.info('Bet: {} on {} at {} for {} against {} at {} odds in {} blocks{} for a fee of {} ({}) [{}]'.format(BET_TYPE_NAME[bindings['bet_type']], bindings['feed_address'], isodt(bindings['deadline']), output(bindings['wager_amount'], 'CHA'), output(bindings['counterwager_amount'], 'CHA'), output(odds, 'odds'), bindings['expiration'], placeholder, output(fee, 'CHA'), bindings['tx_hash'], bindings['validity']))
 
         elif category == 'bet_matches':
             placeholder = ''
@@ -175,13 +144,13 @@ def log (db, command, category, bindings):
                 placeholder = ' that ' + str(output(bindings['target_value'], 'value'))
             if bindings['leverage']:
                 placeholder += ', leveraged {}x'.format(output(bindings['leverage'] / 5040, 'leverage'))
-            logging.info('Bet Match: {} for {} against {} for {} on {} at {}{} ({}) [{}]'.format(BET_TYPE_NAME[bindings['tx0_bet_type']], output(bindings['forward_amount'], 'XCP'), BET_TYPE_NAME[bindings['tx1_bet_type']], output(bindings['backward_amount'], 'XCP'), bindings['feed_address'], isodt(bindings['deadline']), placeholder, bindings['id'], bindings['validity']))
+            logging.info('Bet Match: {} for {} against {} for {} on {} at {}{} ({}) [{}]'.format(BET_TYPE_NAME[bindings['tx0_bet_type']], output(bindings['forward_amount'], 'CHA'), BET_TYPE_NAME[bindings['tx1_bet_type']], output(bindings['backward_amount'], 'CHA'), bindings['feed_address'], isodt(bindings['deadline']), placeholder, bindings['id'], bindings['validity']))
 
         elif category == 'dividends':
-            logging.info('Dividend: {} paid {} per unit of {} ({}) [{}]'.format(bindings['source'], output(bindings['amount_per_unit'], 'XCP'), bindings['asset'], bindings['tx_hash'], bindings['validity']))
+            logging.info('Dividend: {} paid {} per unit of {} ({}) [{}]'.format(bindings['source'], output(bindings['amount_per_unit'], 'CHA'), bindings['asset'], bindings['tx_hash'], bindings['validity']))
 
         elif category == 'burns':
-            logging.info('Burn: {} burned {} for {} ({}) [{}]'.format(bindings['source'], output(bindings['burned'], 'BTC'), output(bindings['earned'], 'XCP'), bindings['tx_hash'], bindings['validity']))
+            logging.info('Burn: {} burned {} for {} ({}) [{}]'.format(bindings['source'], output(bindings['burned'], 'BTC'), output(bindings['earned'], 'CHA'), bindings['tx_hash'], bindings['validity']))
 
         elif category == 'cancels':
             logging.info('Cancel: {} ({}) [{}]'.format(bindings['offer_hash'], bindings['tx_hash'], bindings['validity']))
@@ -310,14 +279,11 @@ def bitcoind_check (db):
 def database_check (db):
     """Checks Chancecoin database to see if the chancecoind server has caught up with Bitcoind."""
     cursor = db.cursor()
-    TRIES = 14
-    for i in range(TRIES):
-        block_index = last_block(db)['block_index']
-        if block_index == bitcoin.rpc('getblockcount', []):
-            cursor.close()
-            return
-        print('Database not up to date. Sleeping for one second. (Try {}/{})'.format(i+1, TRIES), file=sys.stderr)
-        time.sleep(1)
+    block_index = last_block(db)['block_index']
+    if block_index == bitcoin.rpc('getblockcount', []):
+        cursor.close()
+        return
+    print('Database not up to date.')
     raise exceptions.DatabaseError('Chancecoin database is behind Bitcoind. Is the chancecoind server running?')
 
 def do_filter(results, filters, filterop):
@@ -401,7 +367,7 @@ def get_limit_to_blocks(start_block, end_block, col_names=['block_index',]):
 def isodt (epoch_time):
     return datetime.fromtimestamp(epoch_time, tzlocal()).isoformat()
 
-def xcp_supply (db):
+def cha_supply (db):
     cursor = db.cursor()
 
     # Add burns.
@@ -430,7 +396,7 @@ def last_block (db):
 def get_asset_id (asset):
     # Special cases.
     if asset == 'BTC': return 0
-    elif asset == 'XCP': return 1
+    elif asset == 'CHA': return 1
 
     if asset[0] == 'A': raise exceptions.AssetNameError('starts with ‘A’')
 
@@ -458,7 +424,7 @@ def get_asset_id (asset):
 
 def get_asset_name (asset_id):
     if asset_id == 0: return 'BTC'
-    elif asset_id == 1: return 'XCP'
+    elif asset_id == 1: return 'CHA'
 
     if not asset_id > 26**3:
         raise exceptions.AssetIDError('too low')
@@ -603,7 +569,7 @@ def devise (db, quantity, asset, dest, divisible=None):
         return norm(D(quantity) / D(1e8), 6)
 
     if divisible == None:
-        if asset in ('BTC', 'XCP'):
+        if asset in ('BTC', 'CHA'):
             divisible = True
         else:
             cursor = db.cursor()

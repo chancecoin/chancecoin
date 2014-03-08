@@ -16,7 +16,7 @@ from cherrypy import wsgiserver
 from jsonrpc import JSONRPCResponseManager, dispatcher
 
 from . import (config, exceptions, util, bitcoin)
-from . import (send, order, btcpay, issuance, broadcast, bet, dividend, burn, cancel)
+from . import (send, order, btcpay, bet, burn, cancel)
 
 class APIServer(threading.Thread):
 
@@ -28,7 +28,6 @@ class APIServer(threading.Thread):
 
         ######################
         #READ API
-        # TODO: Move all of these functions from util.py here (and use native SQLite queries internally).
 
         @dispatcher.add_method
         def get_address(address, start_block=None, end_block=None):
@@ -59,17 +58,6 @@ class APIServer(threading.Thread):
         @dispatcher.add_method
         def get_bet_matches(filters=None, is_valid=True, order_by=None, order_dir=None, start_block=None, end_block=None, filterop="and"):
             return util.get_bet_matches(db,
-                filters=filters,
-                validity='valid' if bool(is_valid) else None,
-                order_by=order_by,
-                order_dir=order_dir,
-                start_block=start_block,
-                end_block=end_block,
-                filterop=filterop)
-
-        @dispatcher.add_method
-        def get_broadcasts(filters=None, is_valid=True, order_by=None, order_dir=None, start_block=None, end_block=None, filterop="and"):
-            return util.get_broadcasts(db,
                 filters=filters,
                 validity='valid' if bool(is_valid) else None,
                 order_by=order_by,
@@ -128,28 +116,6 @@ class APIServer(threading.Thread):
                 filterop=filterop)
 
         @dispatcher.add_method
-        def get_dividends(filters=None, is_valid=True, order_by=None, order_dir=None, start_block=None, end_block=None, filterop="and"):
-            return util.get_dividends(db,
-                filters=filters,
-                validity='valid' if bool(is_valid) else None,
-                order_by=order_by,
-                order_dir=order_dir,
-                start_block=start_block,
-                end_block=end_block,
-                filterop=filterop)
-
-        @dispatcher.add_method
-        def get_issuances(filters=None, is_valid=True, order_by=None, order_dir=None, start_block=None, end_block=None, filterop="and"):
-            return util.get_issuances(db,
-                filters=filters,
-                validity='valid' if bool(is_valid) else None,
-                order_by=order_by,
-                order_dir=order_dir,
-                start_block=start_block,
-                end_block=end_block,
-                filterop=filterop)
-
-        @dispatcher.add_method
         def get_orders (filters=None, is_valid=True, show_expired=True, order_by=None, order_dir=None, start_block=None, end_block=None, filterop="and"):
             return util.get_orders(db,
                 filters=filters,
@@ -193,32 +159,8 @@ class APIServer(threading.Thread):
             return messages
 
         @dispatcher.add_method
-        def xcp_supply():
-            return util.xcp_supply(db)
-
-        @dispatcher.add_method
-        def get_asset_info(asset):
-            #gets some useful info for the given asset
-            issuances = util.get_issuances(db,
-                filters={'field': 'asset', 'op': '==', 'value': asset},
-                validity='valid',
-                order_by='block_index',
-                order_dir='asc')
-            if not issuances: return None #asset not found, most likely
-            else: last_issuance = issuances[-1]
-
-            #get the last issurance message for this asset, which should reflect the current owner and if
-            # its divisible (and if it was locked, for that matter)
-            locked = not last_issuance['amount'] and not last_issuance['transfer']
-            total_issued = sum([e['amount'] for e in issuances])
-            return {'owner': last_issuance['issuer'],
-                    'divisible': last_issuance['divisible'],
-                    'locked': locked,
-                    'total_issued': total_issued,
-                    'callable': last_issuance['callable'],
-                    'call_date': util.isodt(last_issuance['call_date']) if last_issuance['call_date'] else None,
-                    'call_price': last_issuance['call_price'],
-                    'description': last_issuance['description']}
+        def cha_supply():
+            return util.cha_supply(db)
 
         @dispatcher.add_method
         def get_block_info(block_index):
@@ -267,12 +209,6 @@ class APIServer(threading.Thread):
             return unsigned_tx_hex if unsigned else bitcoin.transmit(unsigned_tx_hex, ask=False)
 
         @dispatcher.add_method
-        def do_broadcast(source, fee_multiplier, text, timestamp, value=0, unsigned=False):
-            unsigned_tx_hex = broadcast.create(db, source, timestamp,
-                                               value, fee_multiplier, text, unsigned=unsigned)
-            return unsigned_tx_hex if unsigned else bitcoin.transmit(unsigned_tx_hex, ask=False)
-
-        @dispatcher.add_method
         def do_btcpay(order_match_id, unsigned=False):
             unsigned_tx_hex = btcpay.create(db, order_match_id, unsigned=unsigned)
             return unsigned_tx_hex if unsigned else bitcoin.transmit(unsigned_tx_hex, ask=False)
@@ -285,22 +221,6 @@ class APIServer(threading.Thread):
         @dispatcher.add_method
         def do_cancel(offer_hash, unsigned=False):
             unsigned_tx_hex = cancel.create(db, offer_hash, unsigned=unsigned)
-            return unsigned_tx_hex if unsigned else bitcoin.transmit(unsigned_tx_hex, ask=False)
-
-        @dispatcher.add_method
-        def do_dividend(source, quantity_per_unit, share_asset, unsigned=False):
-            unsigned_tx_hex = dividend.create(db, source, quantity_per_unit,
-                                              share_asset, unsigned=unsigned)
-            return unsigned_tx_hex if unsigned else bitcoin.transmit(unsigned_tx_hex, ask=False)
-
-        @dispatcher.add_method
-        def do_issuance(source, quantity, asset, divisible, description, callable=False, call_date=None, call_price=None, transfer_destination=None, unsigned=False):
-            try:
-                quantity = int(quantity)
-            except ValueError:
-                raise Exception("Invalid quantity")
-            unsigned_tx_hex = issuance.create(db, source, transfer_destination,
-                asset, quantity, divisible, callable, call_date, call_price, description, unsigned=unsigned)
             return unsigned_tx_hex if unsigned else bitcoin.transmit(unsigned_tx_hex, ask=False)
 
         @dispatcher.add_method
@@ -368,13 +288,13 @@ class APIServer(threading.Thread):
             maxBytes = getattr(application.log, "rot_maxBytes", 10000000)
             backupCount = getattr(application.log, "rot_backupCount", 1000)
             # Make a new RotatingFileHandler for the error log.
-            fname = getattr(application.log, "rot_error_file", os.path.join(config.DATA_DIR, "api.error.log"))
+            fname = getattr(application.log, "rot_error_file", os.path.join(config.DATA_DIR, config.API_LOG))
             h = logging_handlers.RotatingFileHandler(fname, 'a', maxBytes, backupCount)
             h.setLevel(logging.DEBUG)
             h.setFormatter(cherrypy._cplogging.logfmt)
             application.log.error_log.addHandler(h)
             # Make a new RotatingFileHandler for the access log.
-            fname = getattr(application.log, "rot_access_file", os.path.join(config.DATA_DIR, "api.access.log"))
+            fname = getattr(application.log, "rot_access_file", os.path.join(config.DATA_DIR, config.API_LOG))
             h = logging_handlers.RotatingFileHandler(fname, 'a', maxBytes, backupCount)
             h.setLevel(logging.DEBUG)
             h.setFormatter(cherrypy._cplogging.logfmt)
