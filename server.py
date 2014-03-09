@@ -13,7 +13,7 @@ from functools import wraps
 
 import chancecoind
 from lib import (config, api, util, exceptions, bitcoin, blocks)
-from lib import (send, order, btcpay, broadcast, bet, burn, cancel)
+from lib import (send, order, btcpay, bet, burn, cancel)
 
 chancecoind.set_options()
 db = util.connect_to_db()

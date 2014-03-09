@@ -9,7 +9,7 @@ import time
 import server
 import chancecoind
 from lib import (config, api, util, exceptions, bitcoin, blocks)
-from lib import (send, order, btcpay, broadcast, bet, burn, cancel)
+from lib import (send, order, btcpay, bet, burn, cancel)
 
 class ChancecoinThread(QtCore.QThread):
     def __init__(self):

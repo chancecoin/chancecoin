@@ -56,19 +56,11 @@ class SendError (MessageError):
     pass
 class OrderError (MessageError):
     pass
-class BroadcastError (MessageError):
-    pass
 class BetError (MessageError):
-    pass
-class IssuanceError (MessageError):
-    pass
-class DividendError (MessageError):
     pass
 class BTCPayError (MessageError):
     pass
 class CancelError (MessageError):
-    pass
-class CallbackError (MessageError):
     pass
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

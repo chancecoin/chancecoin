@@ -17,10 +17,6 @@ def validate (db, source, give_asset, give_amount, get_asset, get_amount, expira
         problems.append('trading an asset for itself')
     if not give_amount or not get_amount:
         problems.append('zero give or zero get')
-    if give_asset not in ('BTC', 'CHA') and not util.get_issuances(db, validity='valid', asset=give_asset):
-        problems.append('no such asset to give ({})'.format(give_asset))
-    if get_asset not in ('BTC', 'CHA') and not util.get_issuances(db, validity='valid', asset=get_asset):
-        problems.append('no such asset to get ({})'.format(get_asset))
     if expiration > config.MAX_EXPIRATION:
         problems.append('maximum expiration time exceeded')
 
@@ -124,9 +120,8 @@ def match (db, tx):
     tx1_get_remaining = tx1['get_remaining']
 
     order_matches = cursor.fetchall()
-    if tx['block_index'] > 284500:  # For backwards‐compatibility (no sorting before this block).
-        order_matches = sorted(order_matches, key=lambda x: x['tx_index'])                              # Sort by tx index second.
-        order_matches = sorted(order_matches, key=lambda x: D(x['get_amount']) / D(x['give_amount']))   # Sort by price first.
+    order_matches = sorted(order_matches, key=lambda x: x['tx_index'])                              # Sort by tx index second.
+    order_matches = sorted(order_matches, key=lambda x: D(x['get_amount']) / D(x['give_amount']))   # Sort by price first.
 
     # Get fee remaining.
     tx1_fee_remaining = tx1['fee_remaining']
@@ -147,16 +142,12 @@ def match (db, tx):
         tx1_price = util.price(tx1['get_amount'], tx1['give_amount'])
         tx1_inverse_price = util.price(tx1['give_amount'], tx1['get_amount'])
 
-        # NOTE: Old protocol.
-        if tx['block_index'] < 286000: tx1_inverse_price = D(1) / tx1_price
-
         if tx0_price <= tx1_inverse_price:
             forward_amount = int(min(tx0_give_remaining, D(tx1_give_remaining) / tx0_price))
             backward_amount = round(forward_amount * tx0_price)
 
             if not forward_amount: continue
-            if tx1['block_index'] >= 286500:    # Protocol change.
-                if not backward_amount: continue
+            if not backward_amount: continue
 
             # Check and update fee remainings.
             if tx1['block_index'] >= 286500: # Deduct fee_required from fee_remaining, if possible (else don’t match).
@@ -339,11 +330,6 @@ def expire (db, block_index):
             util.credit(db, block_index, order_match['tx1_address'],
                         order_match['backward_asset'],
                         order_match['backward_amount'], event=order_match['id'])
-
-        # Protocol change.
-        if block_index < 286500:
-            # Sanity check: one of the two must have expired.
-            assert tx0_order_time_left or tx1_order_time_left
 
     cursor.close()
 

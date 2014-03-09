@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="description" content="Trade options with Chancecoin.">
 
-	<title>ChanceCoin - {% block title %}{% end %}</title>
+	<title>Chancecoin - {% block title %}{% end %}</title>
 	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.3.0/pure-min.css">
 	<link rel="stylesheet" href="/static/css/style.css">
     <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon">
@@ -15,13 +15,13 @@
 <body>
 	<div class="header">
 		<div class="pure-menu pure-menu-open pure-menu-fixed pure-menu-horizontal">
-			<a class="pure-menu-heading logo" href="/">ChanceCoin</a>
+			<a class="pure-menu-heading logo" href="/">Chancecoin</a>
 			<ul>
 				<li><a href="/casino">Casino</a></li>
 				<li><a href="/wallet">Wallet</a></li>
 				<li><a href="/faq">FAQ</a></li>
-				<li><a href="/resources">Resources</a></li>
 				<li><a href="/participate">Participate</a></li>
+				<li><a href="/resources">Resources</a></li>
 				<li><a href="/forum">Forum</a></li>
 				<li><a href="https://github.com/chancecoin/chancecoin">GitHub</a></li>
 			</ul>
@@ -41,8 +41,6 @@
 	<script src="http://yui.yahooapis.com/3.12.0/build/yui/yui.js"></script>
 	<script>
 	YUI().use('node-base', 'node-event-delegate', function (Y) {
-	// This just makes sure that the href="#" attached to the <a> elements
-	// don't scroll you back up the page.
 	Y.one('body').delegate('click', function (e) {
 	e.preventDefault();
 	}, 'a[href="#"]');

@@ -35,18 +35,10 @@ def parse_tx (db, tx):
         order.parse(db, tx, message)
     elif message_type_id == btcpay.ID:
         btcpay.parse(db, tx, message)
-    elif message_type_id == issuance.ID:
-        issuance.parse(db, tx, message)
-    elif message_type_id == broadcast.ID:
-        broadcast.parse(db, tx, message)
     elif message_type_id == bet.ID:
         bet.parse(db, tx, message)
-    elif message_type_id == dividend.ID:
-        dividend.parse(db, tx, message)
     elif message_type_id == cancel.ID:
         cancel.parse(db, tx, message)
-    elif message_type_id == callback.ID:
-        callback.parse(db, tx, message)
     else:
         parse_tx_cursor.execute('''UPDATE transactions \
                                    SET supported=? \
@@ -235,42 +227,6 @@ def initialise(db):
                                  block_index_idx ON btcpays (block_index)
                               ''')
 
-    initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS issuances(
-                        tx_index INTEGER PRIMARY KEY,
-                        tx_hash TEXT UNIQUE,
-                        block_index INTEGER,
-                        asset TEXT,
-                        amount INTEGER,
-                        divisible BOOL,
-                        issuer TEXT,
-                        transfer BOOL,
-                        callable BOOL,
-                        call_date INTEGER,
-                        call_price REAL,
-                        description TEXT,
-                        fee_paid INTEGER,
-                        validity TEXT
-                        )
-                   ''')
-    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
-                        issuances_idx ON issuances (block_index)
-                    ''')
-
-    initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS broadcasts(
-                        tx_index INTEGER PRIMARY KEY,
-                        tx_hash TEXT UNIQUE,
-                        block_index INTEGER,
-                        source TEXT,
-                        timestamp INTEGER,
-                        value REAL,
-                        fee_multiplier INTEGER,
-                        text TEXT,
-                        validity TEXT)
-                   ''')
-    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
-                        broadcasts_block_index_idx ON broadcasts (block_index)
-                    ''')
-
     # Bets.
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS bets(
                                  tx_index INTEGER PRIMARY KEY,
@@ -329,19 +285,6 @@ def initialise(db):
                                  match_expire_index_idx ON bet_matches (match_expire_index)
                               ''')
 
-    initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS dividends(
-                        tx_index INTEGER PRIMARY KEY,
-                        tx_hash TEXT UNIQUE,
-                        block_index INTEGER,
-                        source TEXT,
-                        asset TEXT,
-                        amount_per_unit INTEGER,
-                        validity TEXT)
-                   ''')
-    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
-                        dividends_block_index_idx ON dividends (block_index)
-                    ''')
-
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS burns(
                         tx_index INTEGER PRIMARY KEY,
                         tx_hash TEXT UNIQUE,
@@ -369,20 +312,6 @@ def initialise(db):
     initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
                         cancels_block_index_idx ON cancels (block_index)
                     ''')
-
-    # Callbacks
-    initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS callbacks(
-                                 tx_index INTEGER PRIMARY KEY,
-                                 tx_hash TEXT UNIQUE,
-                                 block_index INTEGER,
-                                 source TEXT,
-                                 fraction TEXT,
-                                 asset TEXT,
-                                 validity TEXT)
-                              ''')
-    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
-                                 block_index_idx ON callbacks (block_index)
-                              ''')
 
     # Order Expirations
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS order_expirations(

@@ -57,14 +57,6 @@ def rpc (method, params):
         "id": 0,
     }
 
-    '''
-    if config.PREFIX == config.UNITTEST_PREFIX:
-        CURR_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
-        CURR_DIR += '/../test/'
-        open(CURR_DIR + '/rpc.new', 'a') as f
-        f.write(payload)
-    '''
-
     response = connect(config.BITCOIND_RPC, payload, headers)
     if response == None:
         if config.TESTNET: network = 'testnet'
@@ -73,12 +65,6 @@ def rpc (method, params):
 
     if response.status_code not in (200, 500):
         raise exceptions.BitcoindRPCError(str(response.status_code) + ' ' + response.reason)
-
-    '''
-    if config.PREFIX == config.UNITTEST_PREFIX:
-        print(response)
-        f.close()
-    '''
 
     # Return result, with error handling.
     response_json = response.json()
@@ -97,8 +83,6 @@ def rpc (method, params):
             return rpc(method, params)  # This shouldn’t recurse.
         else:   # When will this happen?
             raise exceptions.BitcoindError('Source address not in wallet.')
-    # elif config.PREFIX == config.UNITTEST_PREFIX:
-    #     print(method)
     else:
         raise exceptions.BitcoindError('{}'.format(response_json['error']))
 
