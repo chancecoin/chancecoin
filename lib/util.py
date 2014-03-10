@@ -18,8 +18,6 @@ from . import (config, exceptions, bitcoin)
 b26_digits = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 # Obsolete in Python 3.4, with enum module.
-BET_TYPE_NAME = {0: 'RollHigh', 1: 'RollLow'}
-BET_TYPE_ID = {'RollHigh': 0, 'RollLow': 1}
 DO_FILTER_OPERATORS = {
     '==': operator.eq,
     '!=': operator.ne,
@@ -127,24 +125,7 @@ def log (db, command, category, bindings):
             logging.info('BTC Payment: {} paid {} to {} for order match {} ({}) [{}]'.format(bindings['source'], output(bindings['btc_amount'], 'BTC'), bindings['destination'], bindings['order_match_id'], bindings['tx_hash'], bindings['validity']))
 
         elif category == 'bets':
-            placeholder = ''
-            if bindings['target_value']:    # 0.0 is not a valid target value.
-                placeholder = ' that ' + str(output(bindings['target_value'], 'value'))
-            if bindings['leverage']:
-                placeholder += ', leveraged {}x'.format(output(bindings['leverage']/ 5040, 'leverage'))
-            odds = D(bindings['wager_amount']) / D(bindings['counterwager_amount'])
-
-            fee = round(bindings['wager_amount'] * bindings['fee_multiplier'] / 1e8)    # round?!
-
-            logging.info('Bet: {} on {} at {} for {} against {} at {} odds in {} blocks{} for a fee of {} ({}) [{}]'.format(BET_TYPE_NAME[bindings['bet_type']], bindings['feed_address'], isodt(bindings['deadline']), output(bindings['wager_amount'], 'CHA'), output(bindings['counterwager_amount'], 'CHA'), output(odds, 'odds'), bindings['expiration'], placeholder, output(fee, 'CHA'), bindings['tx_hash'], bindings['validity']))
-
-        elif category == 'bet_matches':
-            placeholder = ''
-            if bindings['target_value']:    # 0 is not a valid target value.
-                placeholder = ' that ' + str(output(bindings['target_value'], 'value'))
-            if bindings['leverage']:
-                placeholder += ', leveraged {}x'.format(output(bindings['leverage'] / 5040, 'leverage'))
-            logging.info('Bet Match: {} for {} against {} for {} on {} at {}{} ({}) [{}]'.format(BET_TYPE_NAME[bindings['tx0_bet_type']], output(bindings['forward_amount'], 'CHA'), BET_TYPE_NAME[bindings['tx1_bet_type']], output(bindings['backward_amount'], 'CHA'), bindings['feed_address'], isodt(bindings['deadline']), placeholder, bindings['id'], bindings['validity']))
+            logging.info('Bet: {} bet {} with chance {} and payout {} [{}]'.format(bindings['source'], output(bindings['bet'], 'CHA'), bindings['chance'], bindings['payout'], bindings['validity']))
 
         elif category == 'burns':
             logging.info('Burn: {} burned {} for {} ({}) [{}]'.format(bindings['source'], output(bindings['burned'], 'BTC'), output(bindings['earned'], 'CHA'), bindings['tx_hash'], bindings['validity']))
@@ -157,12 +138,6 @@ def log (db, command, category, bindings):
 
         elif category == 'order_match_expirations':
             logging.info('Expired Order Match awaiting payment: {}'.format(bindings['order_match_id']))
-
-        elif category == 'bet_expirations':
-            logging.info('Expired bet: {}'.format(bindings['bet_hash']))
-
-        elif category == 'bet_match_expirations':
-            logging.info('Expired Bet Match: {}'.format(bindings['bet_match_id']))
         
 def rowtracer(cursor, sql):
     """Converts fetched SQL data into dict-style"""
@@ -369,13 +344,18 @@ def cha_supply (db):
                       WHERE validity = ?''', ('valid',))
     burn_total = sum([burn['earned'] for burn in cursor.fetchall()])
 
-    # Subtract issuance fees.
-    cursor.execute('''SELECT * FROM issuances\
-                      WHERE validity = ?''', ('valid',))
-    fee_total = sum([issuance['fee_paid'] for issuance in cursor.fetchall()])
+    cursor.close()
+    return burn_total
+
+def bankroll (db):
+    cursor = db.cursor()
+
+    cursor.execute('''SELECT * FROM balances \
+                      WHERE asset = ? and bankroll = ?''', ('CHA',1))
+    bankroll_total = sum([balance['amount'] for balance in cursor.fetchall()])
 
     cursor.close()
-    return burn_total - fee_total
+    return bankroll_total
 
 def last_block (db):
     cursor = db.cursor()
@@ -386,6 +366,16 @@ def last_block (db):
         raise exceptions.DatabaseError('No blocks found.')
     cursor.close()
     return last_block
+
+def get_block (db, block_index):
+    cursor = db.cursor()
+    cursor.execute('''SELECT * FROM blocks WHERE block_index = ?''', (block_index))
+    try:
+        block = cursor.fetchall()[0]
+    except IndexError:
+        raise exceptions.DatabaseError('No blocks found.')
+    cursor.close()
+    return block
 
 def get_asset_id (asset):
     # Special cases.
@@ -506,8 +496,9 @@ def credit (db, block_index, address, asset, amount, event=None):
             'address': address,
             'asset': asset,
             'amount': amount,
+            'bankroll': 1 
         }
-        sql='insert into balances values(:address, :asset, :amount)'
+        sql='insert into balances values(:address, :asset, :amount, :bankroll)'
         credit_cursor.execute(sql, bindings)
     elif len(balances) > 1:
         raise Exception
@@ -712,21 +703,6 @@ def get_bets (db, validity=None, source=None, show_empty=True, filters=None, ord
     cursor.close()
     return do_order_by(results, order_by, order_dir)
 
-def get_bet_matches (db, validity=None, address=None, tx0_hash=None, tx1_hash=None, filters=None, order_by='tx1_index', order_dir='asc', start_block=None, end_block=None, filterop='and'):
-    if filters is None: filters = list()
-    if filters and not isinstance(filters, list): filters = [filters,]
-    if validity: filters.append({'field': 'validity', 'op': '==', 'value': validity})
-    if tx0_hash: filters.append({'field': 'tx0_hash', 'op': '==', 'value': tx0_hash})
-    if tx1_hash: filters.append({'field': 'tx1_hash', 'op': '==', 'value': tx1_hash})
-    cursor = db.cursor()
-    cursor.execute('''SELECT * FROM bet_matches%s'''
-         % get_limit_to_blocks(start_block, end_block,
-             col_names=['tx0_block_index', 'tx1_block_index']))
-    results = do_filter(cursor.fetchall(), filters, filterop)
-    cursor.close()
-    if address: results = [e for e in results if e['tx0_address'] == address or e['tx1_address'] == address]
-    return do_order_by(results, order_by, order_dir)
-
 def get_burns (db, validity=True, source=None, filters=None, order_by='tx_index', order_dir='asc', start_block=None, end_block=None, filterop='and'):
     if filters is None: filters = list()
     if filters and not isinstance(filters, list): filters = [filters,]
@@ -751,17 +727,6 @@ def get_cancels (db, validity=True, source=None, filters=None, order_by=None, or
     cursor.close()
     return do_order_by(results, order_by, order_dir)
 
-def get_bet_expirations (db, source=None, filters=None, order_by=None, order_dir=None, start_block=None, end_block=None, filterop='and'):
-    if filters is None: filters = list()
-    if filters and not isinstance(filters, list): filters = [filters,]
-    if source: filters.append({'field': 'source', 'op': '==', 'value': source})
-    cursor = db.cursor()
-    cursor.execute('''SELECT * FROM bet_expirations%s'''
-         % get_limit_to_blocks(start_block, end_block))
-    results = do_filter(cursor.fetchall(), filters, filterop)
-    cursor.close()
-    return do_order_by(results, order_by, order_dir)
-
 def get_order_expirations (db, source=None, filters=None, order_by=None, order_dir=None, start_block=None, end_block=None, filterop='and'):
     if filters is None: filters = list()
     if filters and not isinstance(filters, list): filters = [filters,]
@@ -771,17 +736,6 @@ def get_order_expirations (db, source=None, filters=None, order_by=None, order_d
          % get_limit_to_blocks(start_block, end_block))
     results = do_filter(cursor.fetchall(), filters, filterop)
     cursor.close()
-    return do_order_by(results, order_by, order_dir)
-
-def get_bet_match_expirations (db, address=None, filters=None, order_by=None, order_dir=None, start_block=None, end_block=None, filterop='and'):
-    if filters is None: filters = list()
-    if filters and not isinstance(filters, list): filters = [filters,]
-    cursor = db.cursor()
-    cursor.execute('''SELECT * FROM bet_match_expirations%s'''
-         % get_limit_to_blocks(start_block, end_block))
-    results = do_filter(cursor.fetchall(), filters, filterop)
-    cursor.close()
-    if address: results = [e for e in results if e['tx0_address'] == address or e['tx1_address'] == address]
     return do_order_by(results, order_by, order_dir)
 
 def get_order_match_expirations (db, address=None, filters=None, order_by=None, order_dir=None, start_block=None, end_block=None, filterop='and'):
@@ -827,19 +781,10 @@ def get_address (db, address, start_block=None, end_block=None):
     address_dict['bets'] = get_bets(db, validity='valid', source=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
     
-    address_dict['bet_matches'] = get_bet_matches(db, validity='valid', address=address,
-        order_by='tx0_block_index', order_dir='asc', start_block=start_block, end_block=end_block)
-    
     address_dict['cancels'] = get_cancels(db, validity='valid', source=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
 
-    address_dict['bet_expirations'] = get_bet_expirations(db, source=address, order_by='block_index',
-        order_dir='asc', start_block=start_block, end_block=end_block)
-
     address_dict['order_expirations'] = get_order_expirations(db, source=address, order_by='block_index',
-        order_dir='asc', start_block=start_block, end_block=end_block)
-
-    address_dict['bet_match_expirations'] = get_bet_match_expirations(db, address=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
 
     address_dict['order_match_expirations'] = get_order_match_expirations(db, address=address, order_by='block_index',

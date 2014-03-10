@@ -10,21 +10,55 @@
 				{% end %}
 			</div>
 		</div>
+
+		<div class="pure-g-r section">
+				<div class="pure-u-1">
+						<h1>Roll the dice</h1>
+						<form class="pure-form pure-form-stacked" action="/casino" method="post">
+						    <fieldset>
+						        <label>Source address</label>
+						        <input type="text" placeholder="source address" name="source">
+
+						        <label>Bet size (in CHA)</label>
+						        <input type="text" placeholder="bet size" name="bet">
+						    
+						        <label>Chance to win (%)</label>
+						        <input type="text" placeholder="chance to win" name="chance" value="50">
+
+						        <label>Payout multiplier</label>
+						        <input type="text" placeholder="payout" name="payout" value="1.98">
+
+						        <button type="submit" class="pure-button pure-button-primary" name="roll" value="high">Roll the dice</button>
+						    </fieldset>
+						</form>						
+				</div>
+		</div>
+
 		<div class="pure-g-r section padding-bottom">
 			<div class="pure-u-1">
-				<h1>Options</h1>
+				<h1>Bets</h1>
 
 				<table class="pure-table pure-table-bordered">
 				    <thead>
 				        <tr>
-				            <th>Bet</th>
+				            <th>Transaction</th>
+				            <th>Bet size</th>
+				            <th>Payout</th>
+				            <th>Target roll</th>
+				            <th>Roll</th>
+				            <th>Profit</th>
 				        </tr>
 				    </thead>
 				
 				    <tbody>
 				    		{% for bet in bets %}
 				        <tr>
-				            <td>Bet</td>
+				            <td></td>
+				            <td></td>
+				            <td></td>
+				            <td></td>
+				            <td></td>
+				            <td></td>
 				        </tr>
 				        {% end %}
 				    </tbody>
@@ -32,10 +66,26 @@
 			</div>
 		</div>
 		
-		<div class="pure-g-r section">
+		<div class="pure-g-r section padding-bottom">
 				<div class="pure-u-1">
-						<h1>Total supply</h1>
-						<p>{{ supply }} CHA</p>
+						<h1>Quick numbers</h1>
+						<table class="pure-table pure-table-bordered">
+						    <thead>
+						        <tr>
+						            <th>Total CHA</th>
+						            <th>Total CHA in bankroll</th>
+						            <th>Max profit</th>
+						        </tr>
+						    </thead>
+						
+						    <tbody>
+						        <tr>
+						            <td>{{ supply }} CHA</td>
+						            <td>{{ bankroll }} CHA</td>
+						            <td>{{ bankroll*0.01 }} CHA</td>
+						        </tr>
+						    </tbody>
+						</table>
 				</div>
 		</div>
 

@@ -200,12 +200,8 @@ class APIServer(threading.Thread):
         ######################
         #WRITE/ACTION API
         @dispatcher.add_method
-        def do_bet(source, feed_address, bet_type, deadline, wager, counterwager, target_value=0.0, leverage=5040, unsigned=False):
-            bet_type_id = util.BET_TYPE_ID[bet_type]
-            unsigned_tx_hex = bet.create(db, source, feed_address,
-                                         bet_type_id, deadline, wager,
-                                         counterwager, target_value,
-                                         leverage, expiration, unsigned=unsigned)
+        def do_bet(source, bet, chance, payout, unsigned=False):
+            unsigned_tx_hex = bet.create(db, source, bet, chance, payout, unsigned=unsigned)
             return unsigned_tx_hex if unsigned else bitcoin.transmit(unsigned_tx_hex, ask=False)
 
         @dispatcher.add_method

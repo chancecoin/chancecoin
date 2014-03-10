@@ -57,7 +57,7 @@ class CasinoHandler(tornado.web.RequestHandler):
     def get(self):
         updated = yield tornado.gen.Task(is_updated)
         bets = util.get_bets(db)
-        self.render("casino.html", bets = bets, updated = updated, supply = util.cha_supply(db))
+        self.render("casino.html", bets = bets, updated = updated, supply = util.cha_supply(db), bankroll = util.bankroll(db))
 
 class WalletHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous

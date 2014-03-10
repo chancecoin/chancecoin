@@ -41,7 +41,7 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
 
     # Data directory
     if not data_dir:
-        config.DATA_DIR = appdirs.user_data_dir(appauthor='Chancecoin', appname='chancecoin', roaming=True)
+        config.DATA_DIR = appdirs.user_data_dir(appauthor=config.APPAUTHOR, appname=config.APPNAME, roaming=True)
     else:
         config.DATA_DIR = data_dir
     if not os.path.isdir(config.DATA_DIR): os.mkdir(config.DATA_DIR)
@@ -277,14 +277,9 @@ if __name__ == '__main__':
 
     parser_bet = subparsers.add_parser('bet', help='offer to make a bet on the value of a feed')
     parser_bet.add_argument('--source', required=True, help='the source address')
-    parser_bet.add_argument('--feed-address', required=True, help='the address which publishes the feed to bet on')
-    parser_bet.add_argument('--bet-type', choices=list(util.BET_TYPE_NAME.values()), required=True, help='choices: {}'.format(list(util.BET_TYPE_NAME.values())))
-    parser_bet.add_argument('--deadline', required=True, help='the date and time at which the bet should be decided/settled')
-    parser_bet.add_argument('--wager', required=True, help='the quantity of CHA to wager')
-    parser_bet.add_argument('--counterwager', required=True, help='the minimum quantity of CHA to be wagered by the user to bet against you, if he were to accept the whole thing')
-    parser_bet.add_argument('--target-value', default=0.0, help='target value for Equal/NotEqual bet')
-    parser_bet.add_argument('--leverage', type=int, default=5040, help='leverage, as a fraction of 5040')
-    parser_bet.add_argument('--expiration', type=int, required=True, help='the number of blocks for which the bet should be valid')
+    parser_bet.add_argument('--bet', required=True, help='the quantity of CHA to bet')
+    parser_bet.add_argument('--chance', required=True, help='chance of winning')
+    parser_bet.add_argument('--payout', required=True, help='payout if you win (must be congruent with chance of winning)')
 
     parser_burn = subparsers.add_parser('burn', help='destroy bitcoins to earn CHA, during an initial period of time')
     parser_burn.add_argument('--source', required=True, help='the source address')
@@ -386,16 +381,11 @@ if __name__ == '__main__':
         print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
 
     elif args.action == 'bet':
-        deadline = calendar.timegm(dateutil.parser.parse(args.deadline).utctimetuple())
-        wager = util.devise(db, args.wager, 'CHA', 'input')
-        counterwager = util.devise(db, args.counterwager, 'CHA', 'input')
-        target_value = util.devise(db, args.target_value, 'value', 'input')
-        leverage = util.devise(db, args.leverage, 'leverage', 'input')
+        bet = util.devise(db, args.bet, 'CHA', 'input')
+        chance = util.devise(db, args.chance, 'value', 'input')
+        payout = util.devise(db, args.payout, 'value', 'input')
 
-        unsigned_tx_hex = bet.create(db, args.source, args.feed_address,
-                                     util.BET_TYPE_ID[args.bet_type], deadline,
-                                     wager, counterwager, target_value,
-                                     leverage, args.expiration, unsigned=args.unsigned)
+        unsigned_tx_hex = bet.create(db, args.source, bet, chance, payout, unsigned=args.unsigned)
         print(unsigned_tx_hex) if args.unsigned else json_print(bitcoin.transmit(unsigned_tx_hex))
 
     elif args.action == 'burn':

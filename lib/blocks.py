@@ -59,7 +59,6 @@ def parse_block (db, block_index, block_time):
 
     # Expire orders and bets.
     order.expire(db, block_index)
-    bet.expire(db, block_index, block_time)
 
     # Parse transactions, sorting them by type.
     parse_block_cursor.execute('''SELECT * FROM transactions \
@@ -73,6 +72,8 @@ def parse_block (db, block_index, block_time):
 
 def initialise(db):
     initialise_cursor = db.cursor()
+    
+    # Blocks
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS blocks(
                         block_index INTEGER PRIMARY KEY,
                         block_hash TEXT UNIQUE,
@@ -82,6 +83,7 @@ def initialise(db):
                         blocks_block_index_idx ON blocks (block_index)
                     ''')
 
+		# Transactions
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS transactions(
                         tx_index INTEGER PRIMARY KEY,
                         tx_hash TEXT UNIQUE,
@@ -138,7 +140,9 @@ def initialise(db):
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS balances(
                                  address TEXT,
                                  asset TEXT,
-                                 amount INTEGER)
+                                 amount INTEGER,
+                                 bankroll BOOL DEFAULT 1
+                                 )
                               ''')
     initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
                                  address_idx ON balances (address)
@@ -147,6 +151,7 @@ def initialise(db):
                                  asset_idx ON balances (asset)
                               ''')
 
+    # Sends
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS sends(
                         tx_index INTEGER PRIMARY KEY,
                         tx_hash TEXT UNIQUE,
@@ -188,7 +193,6 @@ def initialise(db):
                               ''')
 
     # Order Matches
-    # TODO: id field is largely unused.
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS order_matches(
                                  id TEXT PRIMARY KEY,
                                  tx0_index INTEGER,
@@ -227,24 +231,16 @@ def initialise(db):
                                  block_index_idx ON btcpays (block_index)
                               ''')
 
-    # Bets.
+    # Bets
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS bets(
                                  tx_index INTEGER PRIMARY KEY,
                                  tx_hash TEXT UNIQUE,
                                  block_index INTEGER,
                                  source TEXT,
-                                 feed_address TEXT,
-                                 bet_type INTEGER,
-                                 deadline INTEGER,
-                                 wager_amount INTEGER,
-                                 wager_remaining INTEGER,
-                                 counterwager_amount INTEGER,
-                                 counterwager_remaining INTEGER,
-                                 target_value REAL,
-                                 leverage INTEGER,
-                                 expiration INTEGER,
-                                 expire_index INTEGER,
-                                 fee_multiplier INTEGER,
+                                 bet INTEGER,
+                                 chance REAL,
+                                 payout REAL,
+                                 profit INTEGER,
                                  validity TEXT)
                               ''')
     initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
@@ -254,37 +250,7 @@ def initialise(db):
                                  expire_index_idx ON bets (expire_index)
                               ''')
 
-    # Bet Matches
-    # TODO: id field is largely unused.
-    initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS bet_matches(
-                                 id TEXT PRIMARY KEY,
-                                 tx0_index INTEGER,
-                                 tx0_hash TEXT,
-                                 tx0_address TEXT,
-                                 tx1_index INTEGER,
-                                 tx1_hash TEXT,
-                                 tx1_address TEXT,
-                                 tx0_bet_type INTEGER,
-                                 tx1_bet_type INTEGER,
-                                 feed_address TEXT,
-                                 initial_value INTEGER,
-                                 deadline INTEGER,
-                                 target_value REAL,
-                                 leverage INTEGER,
-                                 forward_amount INTEGER,
-                                 backward_amount INTEGER,
-                                 tx0_block_index INTEGER,
-                                 tx1_block_index INTEGER,
-                                 tx0_expiration INTEGER,
-                                 tx1_expiration INTEGER,
-                                 match_expire_index INTEGER,
-                                 fee_multiplier INTEGER,
-                                 validity TEXT)
-                              ''')
-    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
-                                 match_expire_index_idx ON bet_matches (match_expire_index)
-                              ''')
-
+    # Burns
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS burns(
                         tx_index INTEGER PRIMARY KEY,
                         tx_hash TEXT UNIQUE,
@@ -301,6 +267,7 @@ def initialise(db):
                                  address_idx ON burns (address)
                               ''')
 
+    # Cancels
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS cancels(
                         tx_index INTEGER PRIMARY KEY,
                         tx_hash TEXT UNIQUE,
@@ -324,17 +291,6 @@ def initialise(db):
                                  block_index_idx ON order_expirations (block_index)
                               ''')
 
-    # Bet Expirations
-    initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS bet_expirations(
-                                 bet_index INTEGER PRIMARY KEY,
-                                 bet_hash TEXT UNIQUE,
-                                 source TEXT,
-                                 block_index INTEGER)
-                              ''')
-    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
-                                 block_index_idx ON bet_expirations (block_index)
-                              ''')
-
     # Order Match Expirations
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS order_match_expirations(
                                  order_match_id TEXT PRIMARY KEY,
@@ -344,17 +300,6 @@ def initialise(db):
                               ''')
     initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
                                  block_index_idx ON order_match_expirations (block_index)
-                              ''')
-
-    # Bet Match Expirations
-    initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS bet_match_expirations(
-                                 bet_match_id TEXT PRIMARY KEY,
-                                 tx0_address TEXT,
-                                 tx1_address TEXT,
-                                 block_index INTEGER)
-                              ''')
-    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
-                                 block_index_idx ON bet_match_expirations (block_index)
                               ''')
 
     # Messages
@@ -459,18 +404,11 @@ def reparse (db, block_index=None, quiet=False):
         cursor.execute('''DROP TABLE IF EXISTS orders''')
         cursor.execute('''DROP TABLE IF EXISTS order_matches''')
         cursor.execute('''DROP TABLE IF EXISTS btcpays''')
-        cursor.execute('''DROP TABLE IF EXISTS issuances''')
-        cursor.execute('''DROP TABLE IF EXISTS broadcasts''')
         cursor.execute('''DROP TABLE IF EXISTS bets''')
-        cursor.execute('''DROP TABLE IF EXISTS bet_matches''')
-        cursor.execute('''DROP TABLE IF EXISTS dividends''')
         cursor.execute('''DROP TABLE IF EXISTS burns''')
         cursor.execute('''DROP TABLE IF EXISTS cancels''')
-        cursor.execute('''DROP TABLE IF EXISTS callbacks''')
         cursor.execute('''DROP TABLE IF EXISTS order_expirations''')
-        cursor.execute('''DROP TABLE IF EXISTS bet_expirations''')
         cursor.execute('''DROP TABLE IF EXISTS order_match_expirations''')
-        cursor.execute('''DROP TABLE IF EXISTS bet_match_expirations''')
         cursor.execute('''DROP TABLE IF EXISTS messages''')
 
         # Reparse all blocks, transactions.
