@@ -3,7 +3,7 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 }
-	
+
 body {
 	margin: 0 auto;
 	line-height: 1.7em;
@@ -63,18 +63,30 @@ body {
 }
 
 .section {
-	border-bottom: 1px solid #ccc;	
-	padding-right: 1em;	
-	padding-left: 1em;	
+	border-bottom: 1px solid #ccc;
+	padding-right: 1em;
+	padding-left: 1em;
 }
 
 .padding-bottom {
-	padding-bottom: 1em;	
+	padding-bottom: 1em;
 }
 
 .segment {
 	text-align: center;
-	padding-right: 1em;	
+	padding-right: 1em;
+}
+
+.one-third {
+	width: 32%;
+}
+
+.one-fifth {
+	width: 19%;
+}
+
+.vert-bottom {
+	vertical-align: bottom;
 }
 
 .inline {

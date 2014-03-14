@@ -57,7 +57,20 @@ class CasinoHandler(tornado.web.RequestHandler):
     def get(self):
         updated = yield tornado.gen.Task(is_updated)
         bets = util.get_bets(db)
-        self.render("casino.html", bets = bets, updated = updated, supply = util.cha_supply(db), bankroll = util.bankroll(db))
+        self.render("casino.html", bets = bets, updated = updated, supply = util.cha_supply(db), bankroll = util.bankroll(db), house_edge=config.HOUSE_EDGE)
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
+    def post(self):
+        if self.get_argument("source") and self.get_argument("bet") and self.get_argument("payout") and self.get_argument("chance"):
+            updated = yield tornado.gen.Task(is_updated)
+            bets = util.get_bets(db)
+            source = self.get_argument("source")
+            bet = self.get_argument("bet")
+            chance = float(self.get_argument("chance"))
+            payout = float(self.get_argument("payout"))
+            unsigned_tx_hex = bet.create(db, args.source, bet, chance, payout, unsigned=args.unsigned)
+            #bitcoin.transmit(unsigned_tx_hex, ask=False)
+            self.render("casino.html", bets = bets, updated = updated, supply = util.cha_supply(db), bankroll = util.bankroll(db), house_edge=config.HOUSE_EDGE)
 
 class WalletHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
@@ -84,6 +97,24 @@ class WalletHandler(tornado.web.RequestHandler):
             source = self.get_argument("source")
             quantity = float(self.get_argument("quantity"))
             unsigned_tx_hex = burn.create(db, source, quantity, unsigned=False)
+            #bitcoin.transmit(unsigned_tx_hex, ask=False)
+            print(unsigned_tx_hex)
+        elif self.get_argument("form")=="buy":
+            source = self.get_argument("source")
+            quantity = float(self.get_argument("quantity"))
+            price = float(self.get_argument("price"))
+            expiration = 6 * 24 #24 hour order
+            unsigned_tx_hex = order.create(db, source, 'BTC', quantity*price, 'CHA', quantity,
+                                           expiration, 0, config.MIN_FEE / config.UNIT, unsigned=False)
+            #bitcoin.transmit(unsigned_tx_hex, ask=False)
+            print(unsigned_tx_hex)
+        elif self.get_argument("form")=="sell":
+            source = self.get_argument("source")
+            quantity = float(self.get_argument("quantity"))
+            price = float(self.get_argument("price"))
+            expiration = 6 * 24 #24 hour order
+            unsigned_tx_hex = order.create(db, source, 'CHA', quantity, 'BTC', quantity*price,
+                                           expiration, 0, config.MIN_FEE / config.UNIT, unsigned=False)
             #bitcoin.transmit(unsigned_tx_hex, ask=False)
             print(unsigned_tx_hex)
         self.render("wallet.html", wallet = wallet, updated = updated)
