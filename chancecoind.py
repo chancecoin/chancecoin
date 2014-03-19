@@ -171,28 +171,28 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
     if config.TESTNET:
         if config.TESTCOIN:
             config.ADDRESSVERSION = b'\x6f'
-            config.BLOCK_FIRST = 154908
-            config.BURN_START = 154908
-            config.BURN_END = 4017708
+            config.BLOCK_FIRST = config.TESTNET_TESTCOIN_FIRST
+            config.BURN_START = config.TESTNET_TESTCOIN_START
+            config.BURN_END = config.TESTNET_TESTCOIN_END
             config.UNSPENDABLE = config.UNSPENDABLE_TESTNET_TESTCOIN
         else:
             config.ADDRESSVERSION = b'\x6f'
-            config.BLOCK_FIRST = 154908
-            config.BURN_START = 154908
-            config.BURN_END = 4017708
+            config.BLOCK_FIRST = config.TESTNET_LIVECOIN_FIRST
+            config.BURN_START = config.TESTNET_LIVECOIN_START
+            config.BURN_END = config.TESTNET_LIVECOIN_END
             config.UNSPENDABLE = config.UNSPENDABLE_TESTNET_LIVECOIN
     else:
         if config.TESTCOIN:
             config.ADDRESSVERSION = b'\x00'
-            config.BLOCK_FIRST = 288270
-            config.BURN_START = 288310
-            config.BURN_END = 2500000
+            config.BLOCK_FIRST = config.LIVE_TESTCOIN_FIRST
+            config.BURN_START = config.LIVE_TESTCOIN_START
+            config.BURN_END = config.LIVE_TESTCOIN_END
             config.UNSPENDABLE = config.UNSPENDABLE_LIVE_TESTCOIN
         else:
             config.ADDRESSVERSION = b'\x00'
-            config.BLOCK_FIRST = 287270
-            config.BURN_START = 288310
-            config.BURN_END = 293810
+            config.BLOCK_FIRST = config.LIVE_LIVECOIN_FIRST
+            config.BURN_START = config.LIVE_LIVECOIN_START
+            config.BURN_END = config.LIVE_LIVECOIN_END
             config.UNSPENDABLE = config.UNSPENDABLE_LIVE_LIVECOIN
 
     # Headless operation
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     if os.name == 'nt':
         #patch up cmd.exe's "challenged" (i.e. broken/non-existent) UTF-8 logging
         util_windows.fix_win32_unicode()
-    
+
     # Parse command-line arguments.
     parser = argparse.ArgumentParser(prog='chancecoind', description='the reference implementation of the Chancecoin protocol')
     parser.add_argument('-V', '--version', action='version', version="chancecoind v%s" % config.CLIENT_VERSION)

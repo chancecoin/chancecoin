@@ -23,6 +23,12 @@ def validate (db, source, bet, chance, payout):
     if 1/chance!=payout*(1-config.HOUSE_EDGE):
         problems.append('chance and payout are not congruent')
 
+    if chance<0 or chance>100:
+        problems.append('chance must be between 0 and 100')
+
+    if payout<1:
+        problems.append('payout must be greater than 1')
+
     if (payout-1)*bet > config.MAX_PROFIT*util.cha_supply(db):
         problems.append('maximum payout exceeded')
 
@@ -69,7 +75,7 @@ def parse (db, tx, message):
         if problems: validity = 'invalid: ' + ';'.join(problems)
 
     if bet == 0.0:
-        # The way to get out of being part of the bankroll is by betting 0 CHA. 
+        # The way to get out of being part of the bankroll is by betting 0 CHA.
         # This will permanently turn the address off as a part of the bankroll.
         bindings = {
             'address': tx['source'],
@@ -90,12 +96,12 @@ def parse (db, tx, message):
             #The bet is a winning bet
             util.credit(db, tx['block_index'], tx['source'], 'CHA', (payout-1.0)*bet)
             for balance in balances:
-                util.debit(db, tx['block_index'], tx['source'], 'CHA', (payout-1.0)*bet*(balance['amount']/bankroll))                
+                util.debit(db, tx['block_index'], tx['source'], 'CHA', (payout-1.0)*bet*(balance['amount']/bankroll))
         else:
             #The bet is a losing bet
             util.debit(db, tx['block_index'], tx['source'], 'CHA', bet)
             for balance in balances:
-                util.credit(db, tx['block_index'], tx['source'], 'CHA', bet*(balance['amount']/bankroll))                
+                util.credit(db, tx['block_index'], tx['source'], 'CHA', bet*(balance['amount']/bankroll))
 
     # Add parsed transaction to message-type–specific table.
     bindings = {

@@ -5,15 +5,20 @@
 {% block content %}
 		<div class="pure-g-r section">
 			<div class="pure-u-1">
-			  {% if updated==False %}
-				<p class="warning">Warning: Chancecoin is not finished synchronizing with the network.</p>
+				<h1>Casino</h1>
+				{% if version_updated==False %}
+				<p class="warning">Chancecoin needs to be updated. Please go to <a href="http://chancecoin.com">Chancecoin.com</a> and update.</p>
+				{% elif updated==False %}
+				<p class="warning">Chancecoin is not finished synchronizing with the network.</p>
+				{% else %}
+				<p class="success">Chancecoin is up to date.</p>
 				{% end %}
 			</div>
 		</div>
 
 		<div class="pure-g-r section">
 				<div class="pure-u-1">
-						<h1>Roll the dice</h1>
+						<h2>Roll the dice</h2>
 						<form class="pure-form pure-form-stacked" action="/casino" method="post">
 						  	<fieldset>
 										<table class="pure-table pure-table-bordered">
@@ -43,7 +48,7 @@
 
 		<div class="pure-g-r section padding-bottom">
 			<div class="pure-u-1">
-				<h1>Bets</h1>
+				<h2>Bets</h2>
 
 				<table class="pure-table pure-table-bordered">
 				    <thead>
@@ -52,8 +57,6 @@
 				            <th>Bet size</th>
 				            <th>Chance to win</th>
 				            <th>Payout multiplier</th>
-										<th>Target roll</th>
-				            <th>Roll</th>
 				            <th>Profit</th>
 				        </tr>
 				    </thead>
@@ -61,13 +64,11 @@
 				    <tbody>
 				    		{% for bet in bets %}
 				        <tr>
-				            <td></td>
-				            <td></td>
-				            <td></td>
-				            <td></td>
-				            <td></td>
-				            <td></td>
-										<td></td>
+				            <td>{{bet['source']}}</td>
+										<td>{{bet['bet']}}</td>
+										<td>{{bet['chance']}}</td>
+										<td>{{bet['payout']}}</td>
+										<td>{{bet['profit']}}</td>
 				        </tr>
 				        {% end %}
 				    </tbody>
@@ -77,7 +78,7 @@
 
 		<div class="pure-g-r section padding-bottom">
 				<div class="pure-u-1">
-						<h1>Quick numbers</h1>
+						<h2>Quick numbers</h2>
 						<table class="pure-table pure-table-bordered">
 						    <thead>
 						        <tr>

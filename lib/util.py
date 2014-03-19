@@ -138,7 +138,7 @@ def log (db, command, category, bindings):
 
         elif category == 'order_match_expirations':
             logging.info('Expired Order Match awaiting payment: {}'.format(bindings['order_match_id']))
-        
+
 def rowtracer(cursor, sql):
     """Converts fetched SQL data into dict-style"""
     dictionary = {}
@@ -216,7 +216,7 @@ def versions_check (db):
         versions = json.loads(response.text)
     except Exception as e:
         raise exceptions.DatabaseVersionError('Unable to check client, database versions. How’s your Internet access?')
- 
+
     # Check client version (for important UI changes).
     if config.CLIENT_VERSION < versions['minimum_client_version']:
         raise exceptions.ClientVersionError('Please upgrade chancecoind to the latest version.')
@@ -496,7 +496,7 @@ def credit (db, block_index, address, asset, amount, event=None):
             'address': address,
             'asset': asset,
             'amount': amount,
-            'bankroll': 1 
+            'bankroll': 1
         }
         sql='insert into balances values(:address, :asset, :amount, :bankroll)'
         credit_cursor.execute(sql, bindings)
@@ -755,7 +755,7 @@ def get_address (db, address, start_block=None, end_block=None):
                                              address)
     address_dict = {}
     address_dict['balances'] = get_balances(db, address=address)
-    
+
     address_dict['debits'] = get_debits(db, address=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
 
@@ -764,23 +764,23 @@ def get_address (db, address, start_block=None, end_block=None):
 
     address_dict['burns'] = get_burns(db, validity='valid', source=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
-    
+
     address_dict['sends'] = get_sends(db, validity='valid', source=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block, filterop='or')
-    #^ with filterop == 'or', we get all sends where this address was the source OR destination 
-    
+    #^ with filterop == 'or', we get all sends where this address was the source OR destination
+
     address_dict['orders'] = get_orders(db, validity='valid', source=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
-    
+
     address_dict['order_matches'] = get_order_matches(db, validity='valid', address=address,
         order_by='tx0_block_index', order_dir='asc', start_block=start_block, end_block=end_block)
-    
+
     address_dict['btcpays'] = get_btcpays(db, validity='valid', order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
-    
+
     address_dict['bets'] = get_bets(db, validity='valid', source=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
-    
+
     address_dict['cancels'] = get_cancels(db, validity='valid', source=address, order_by='block_index',
         order_dir='asc', start_block=start_block, end_block=end_block)
 
@@ -791,5 +791,5 @@ def get_address (db, address, start_block=None, end_block=None):
         order_dir='asc', start_block=start_block, end_block=end_block)
 
     return address_dict
-    
+
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

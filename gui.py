@@ -18,7 +18,6 @@ class ChancecoinThread(QtCore.QThread):
     def run(self):
         chancecoind.set_options()
         db = util.connect_to_db()
-        util.versions_check(db)
         blocks.follow(db)
 
 class ServerThread(QtCore.QThread):

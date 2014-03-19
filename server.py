@@ -35,6 +35,14 @@ def is_updated(callback):
         callback(False)
     callback(True)
 
+@run_async
+def is_version_updated(callback):
+    try:
+        util.versions_check()
+    except:
+        callback(False)
+    callback(True)
+
 class HomeHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
@@ -56,13 +64,15 @@ class CasinoHandler(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def get(self):
         updated = yield tornado.gen.Task(is_updated)
+        version_updated = yield tornado.gen.Task(is_version_updated)
         bets = util.get_bets(db)
-        self.render("casino.html", bets = bets, updated = updated, supply = util.cha_supply(db), bankroll = util.bankroll(db), house_edge=config.HOUSE_EDGE)
+        self.render("casino.html", bets = bets, updated = updated, version_updated = version_updated, supply = util.cha_supply(db), bankroll = util.bankroll(db), house_edge=config.HOUSE_EDGE)
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         if self.get_argument("source") and self.get_argument("bet") and self.get_argument("payout") and self.get_argument("chance"):
             updated = yield tornado.gen.Task(is_updated)
+            version_updated = yield tornado.gen.Task(is_version_updated)
             bets = util.get_bets(db)
             source = self.get_argument("source")
             bet = self.get_argument("bet")
@@ -70,18 +80,20 @@ class CasinoHandler(tornado.web.RequestHandler):
             payout = float(self.get_argument("payout"))
             unsigned_tx_hex = bet.create(db, args.source, bet, chance, payout, unsigned=args.unsigned)
             #bitcoin.transmit(unsigned_tx_hex, ask=False)
-            self.render("casino.html", bets = bets, updated = updated, supply = util.cha_supply(db), bankroll = util.bankroll(db), house_edge=config.HOUSE_EDGE)
+            self.render("casino.html", bets = bets, updated = updated, version_updated = version_updated, supply = util.cha_supply(db), bankroll = util.bankroll(db), house_edge=config.HOUSE_EDGE)
 
 class WalletHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self):
         updated = yield tornado.gen.Task(is_updated)
-        self.render("wallet.html", wallet = None, updated = updated)
+        version_updated = yield tornado.gen.Task(is_version_updated)
+        self.render("wallet.html", wallet = None, updated = updated, version_updated = version_updated)
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         updated = yield tornado.gen.Task(is_updated)
+        version_updated = yield tornado.gen.Task(is_version_updated)
         wallet = None
         if self.get_argument("form")=="balance":
             address = self.get_argument("address")
@@ -90,7 +102,7 @@ class WalletHandler(tornado.web.RequestHandler):
             source = self.get_argument("source")
             destination = self.get_argument("destination")
             quantity = float(self.get_argument("quantity"))
-            unsigned_tx_hex = send.create(db, source, destination, quantity, asset, unsigned=False)
+            unsigned_tx_hex = send.create(db, source, destination, quantity, 'CHA', unsigned=False)
             #bitcoin.transmit(unsigned_tx_hex, ask=False)
             print(unsigned_tx_hex)
         elif self.get_argument("form")=="burn":
@@ -117,17 +129,17 @@ class WalletHandler(tornado.web.RequestHandler):
                                            expiration, 0, config.MIN_FEE / config.UNIT, unsigned=False)
             #bitcoin.transmit(unsigned_tx_hex, ask=False)
             print(unsigned_tx_hex)
-        self.render("wallet.html", wallet = wallet, updated = updated)
+        self.render("wallet.html", wallet = wallet, updated = updated, version_updated = version_updated)
 
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
             (r"/", HomeHandler),
             (r"/wallet", WalletHandler),
+            (r"/casino", CasinoHandler),
             (r"/faq", FAQHandler),
             (r"/resources", ResourcesHandler),
             (r"/participate", ParticipateHandler),
-            (r"/casino", CasinoHandler),
         ]
         settings = dict(
             template_path=os.path.join(os.path.dirname(__file__), "templates"),

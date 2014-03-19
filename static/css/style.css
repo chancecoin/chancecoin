@@ -94,8 +94,12 @@ body {
 	vertical-align: middle;
 }
 
-.warning {
+.warning, .error {
 	background: #fcc;
+}
+
+.success {
+	background: #ccf;
 }
 
 fieldset, input {

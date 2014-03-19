@@ -5,8 +5,13 @@
 {% block content %}
 		<div class="pure-g-r section">
 			<div class="pure-u-1">
-			  {% if updated==False %}
-				<p class="warning">Warning: Chancecoin is not finished synchronizing with the network.</p>
+				<h1>Wallet</h1>
+				{% if version_updated==False %}
+				<p class="warning">Chancecoin needs to be updated. Please go to <a href="http://chancecoin.com">Chancecoin.com</a> and update.</p>
+			  {% elif updated==False %}
+				<p class="warning">Chancecoin is not finished synchronizing with the network.</p>
+				{% else %}
+				<p class="success">Chancecoin is up to date.</p>
 				{% end %}
 			</div>
 		</div>
@@ -22,7 +27,11 @@
 						    </fieldset>
 						</form>
 						{% if wallet!=None %}
-						<p>{{ wallet }}</p>
+						{% if wallet['balances'] and wallet['balances']['CHA'] %}
+						<p>{{ wallet['balances']['CHA'] }} CHA</p>
+						{% else %}
+						<p>0 CHA</p>
+						{% end %}
 						{% end %}
 				</div>
 				<div class="pure-u-1-3 segment one-third">
