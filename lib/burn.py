@@ -36,8 +36,6 @@ def create (db, source, quantity, overburn=False, unsigned=False):
     # Check that a maximum of 1 BTC total is burned per address.
     burns = util.get_burns(db, source=source, validity='valid')
     already_burned = sum([burn['burned'] for burn in burns])
-    if quantity > (1 * config.UNIT - already_burned) and not overburn:
-        raise exceptions.BurnError('1 BTC may be burned per address')
     return bitcoin.transaction(source, destination, quantity, config.MIN_FEE, None, unsigned=unsigned)
 
 def parse (db, tx, message=None):
@@ -59,10 +57,7 @@ def parse (db, tx, message=None):
         cursor.execute('''SELECT * FROM burns WHERE (validity = ? AND source = ?)''', ('valid', tx['source']))
         burns = cursor.fetchall()
         already_burned = sum([burn['burned'] for burn in burns])
-        ONE_BTC = 1 * config.UNIT
-        max_burn = ONE_BTC - already_burned
-        if sent > max_burn: burned = max_burn   # Exceeded maximum burn; earn what you can.
-        else: burned = sent
+        burned = sent
 
         total_time = D(config.BURN_END - config.BURN_START)
         partial_time = D(config.BURN_END - tx['block_index'])
