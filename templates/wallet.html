@@ -13,6 +13,9 @@
 				{% else %}
 				<p class="success">Chancecoin is up to date.</p>
 				{% end %}
+				{% if message!=None %}
+				<p class="info">{{ message }}</p>
+				{% end %}
 			</div>
 		</div>
 		<div class="pure-g-r section">
@@ -26,12 +29,8 @@
 						        <button type="submit" class="pure-button pure-button-primary">Get balance</button>
 						    </fieldset>
 						</form>
-						{% if wallet!=None %}
-						{% if wallet['balances'] and wallet['balances']['CHA'] %}
-						<p>{{ wallet['balances']['CHA'] }} CHA</p>
-						{% else %}
-						<p>0 CHA</p>
-						{% end %}
+						{% if balance!=None %}
+						<p>{{ balance }} CHA</p>
 						{% end %}
 				</div>
 				<div class="pure-u-1-3 segment one-third">
@@ -102,11 +101,20 @@
 						    </thead>
 
 						    <tbody>
+										{% for order in orders_sell %}
 						        <tr>
-						            <td>100</td>
-						            <td>0.01</td>
-						            <td>100</td>
+												<td>{{ order(0) }}</td>
+												<td>{{ order(1) }}</td>
+												<td></td>
 						        </tr>
+										{% end }
+										{% for order in orders_buy %}
+										<tr>
+												<td></td>
+												<td>{{ order(0) }}</td>
+												<td>{{ order(1) }}</td>
+										</tr>
+										{% end }
 						    </tbody>
 						</table>
 				</div>

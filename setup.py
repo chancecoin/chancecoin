@@ -2,7 +2,7 @@ import sys
 from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need fine tuning.
-build_exe_options = {"packages": ["os"], "excludes": ["tkinter"]}
+build_exe_options = {"packages": ["os"], "excludes": []}
 
 # GUI applications require a different base on Windows (the default is for a
 # console application).
@@ -14,4 +14,4 @@ setup(  name = "Chancecoin",
         version = "1.0",
         description = "Trade options with Chancecoin.",
         options = {"build_exe": build_exe_options},
-        executables = [Executable("chancecoind.py", base=base)])
+        executables = [Executable("gui.py", base=base)])

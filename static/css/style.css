@@ -99,6 +99,10 @@ body {
 }
 
 .success {
+	background: #cfc;
+}
+
+.info {
 	background: #ccf;
 }
 

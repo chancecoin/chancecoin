@@ -13,6 +13,9 @@
 				{% else %}
 				<p class="success">Chancecoin is up to date.</p>
 				{% end %}
+				{% if message!=None %}
+				<p class="info">{{ message }}</p>
+				{% end %}
 			</div>
 		</div>
 
@@ -20,6 +23,7 @@
 				<div class="pure-u-1">
 						<h2>Roll the dice</h2>
 						<form class="pure-form pure-form-stacked" action="/casino" method="post">
+								<input type="hidden" name="form" value="roll">
 						  	<fieldset>
 										<table class="pure-table pure-table-bordered">
 												<thead>
@@ -48,7 +52,7 @@
 
 		<div class="pure-g-r section padding-bottom">
 			<div class="pure-u-1">
-				<h2>Bets</h2>
+				<h2>All bets</h2>
 
 				<table class="pure-table pure-table-bordered">
 				    <thead>
@@ -73,6 +77,40 @@
 				        {% end %}
 				    </tbody>
 				</table>
+				<h2>My bets</h2>
+				<form class="pure-form pure-form-stacked" action="/casino" method="post">
+						<fieldset>
+								<input type="hidden" name="form" value="my_bets">
+
+								<input type="text" placeholder="address" name="address">
+								<button type="submit" class="pure-button pure-button-primary">Get my bets</button>
+						</fieldset>
+				</form>
+				{% if my_bets!=None %}
+				<table class="pure-table pure-table-bordered">
+						<thead>
+								<tr>
+										<th>Source address</th>
+										<th>Bet size</th>
+										<th>Chance to win</th>
+										<th>Payout multiplier</th>
+										<th>Profit</th>
+								</tr>
+						</thead>
+
+						<tbody>
+								{% for bet in my_bets %}
+								<tr>
+										<td>{{bet['source']}}</td>
+										<td>{{bet['bet']}}</td>
+										<td>{{bet['chance']}}</td>
+										<td>{{bet['payout']}}</td>
+										<td>{{bet['profit']}}</td>
+								</tr>
+								{% end %}
+						</tbody>
+				</table>
+				{% end %}
 			</div>
 		</div>
 
