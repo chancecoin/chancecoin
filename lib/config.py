@@ -38,6 +38,9 @@ LIVE_TESTCOIN_END = 2500000
 LIVE_LIVECOIN_FIRST = 291860
 LIVE_LIVECOIN_START = LIVE_LIVECOIN_FIRST
 LIVE_LIVECOIN_END = LIVE_LIVECOIN_START+6*24*30 #30 days
+MAX_BURN = 1000000
+MULTIPLIER = 1000
+MULTIPLIER_INITIAL = 1500
 
 API_LOG = 'api.error.log'
 HOUSE_EDGE = 0.02 #0.02 means the house takes 2% edge
@@ -46,10 +49,10 @@ APPAUTHOR = 'Chancecoin'
 APPNAME = 'chancecoin'
 
 # Versions
-CLIENT_VERSION_MAJOR = 6
+CLIENT_VERSION_MAJOR = 1
 CLIENT_VERSION_MINOR = 0
 CLIENT_VERSION = float(str(CLIENT_VERSION_MAJOR) + '.' + str(CLIENT_VERSION_MINOR))
-DB_VERSION_MAJOR = 7        # Major version changes the blocks or transactions table.
+DB_VERSION_MAJOR = 1        # Major version changes the blocks or transactions table.
 DB_VERSION_MINOR = 0        # Minor version changes just the parsing.
 DB_VERSION = float(str(DB_VERSION_MAJOR) + '.' + str(DB_VERSION_MINOR))
 

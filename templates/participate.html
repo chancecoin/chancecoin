@@ -6,7 +6,44 @@
 		<div class="pure-g-r section">
 			<div class="pure-u-1">
 				<h1>Participate</h1>
-				<p>Blah</p>
+				<h2>Description</h2>
+				<p>Chancecoin (CHA) is a protocol and coin used to bet on dice rolls in a decentralized casino. Owners of the coin may gamble on dice rolls, with randomness provided by Bitcoin block hashes. Owners of the coin are automatically invested in the house bankroll. The protocol, which is based heavily on Counterparty (XCP), is built on top of the Bitcoin blockchain. Coins are created by burning Bitcoins.</p>
+				<h2>Burn information</h2>
+				<ul>
+					<li><strong>Maximum coins burned</strong>: {{ max_burn }}</li>
+					<li><strong>Burn period</strong>: Bitcoin blocks {{ burn_start }} to {{ burn_end }}</li>
+					<li><strong>Coins burned in first block</strong>: {{ multiplier_initial }} CHA per 1 BTC</li>
+					<li><strong>Coins burned in last block</strong>: {{ multiplier }} CHA per 1 BTC</li>
+					<li><strong>BTC burn address</strong>: <a href="http://blockchain.info/address/{{ unspendable }}">{{ unspendable }}</a></li>
+				</ul>
+				<h2>Casino information</h2>
+				<ul>
+					<li><strong>House edge</strong>: {{ house_edge*100 }}%</li>
+					<li><strong>Maximum win</strong>: {{ max_profit*100 }}% of bankroll</li>
+				</ul>
+				<h2>Wallet software</h2>
+				<ul>
+					<li><a href="http://chancecoin.com/static/downloads/chancecoin-1.0.dmg">OS X binary</a></li>
+					<li><a href="http://chancecoin.com/static/downloads/chancecoin-1.0.exe">Windows binary</a></li>
+					<li><a href="http://github.com/chancecoin/chancecoin">Install from source on GitHub</a></li>
+				</ul>
+				<h2>Resources</h2>
+				<ul>
+					<li><a href="http://chancecoin.com">Home page</a></li>
+					<li><a href="http://chancecoin.com/forum">Forum</a></li>
+					<li><a href="http://www.reddit.com/r/chancecoin/">Subreddit</a></li>
+				</ul>
+				<h2>How do I buy CHA?</h2>
+				<p>During the burn period, all you need to do is send BTC to {{ unspendable }}. You can do this using Bitcoin wallet software, or using the standard Chancecoin wallet or command line interface.</p>
+				<p>After the burn period, you can still trade CHA for BTC on the decentralized exchange using the standard Chancecoin wallet or command line interface.</p>
+				<h2>How do I gamble?</h2>
+				<p>You can gamble using the standard Chancecoin wallet or command line interface. Choose the amount of CHA you want to bet, and the desired payout or odds of winning.</p>
+				<h2>How do I bankroll the house?</h2>
+				<p>By owning CHA, you are automatically bankrolling the house. As people make bets, your balance will fluctuate. On average, you can expect to earn the house edge of {{ house_edge*100 }}% per bet.</p>
+				<h2>Donations</h2>
+				<p>Donations to 1BckY64TE6VrjVcGMizYBE7gt22axnq6CM are welcome.</p>
+				<h2>Developers</h2>
+				<p><a href="https://bitcointalk.org/index.php?action=profile;u=252066">Magician</a> and <a href="https://bitcointalk.org/index.php?action=profile;u=272243">Venetian</a></p>
 			</div>
 		</div>
 {% end %}

@@ -72,7 +72,7 @@ def parse_block (db, block_index, block_time):
 
 def initialise(db):
     initialise_cursor = db.cursor()
-    
+
     # Blocks
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS blocks(
                         block_index INTEGER PRIMARY KEY,
@@ -490,7 +490,7 @@ def follow (db):
         # Get new blocks.
         block_count = bitcoin.rpc('getblockcount', [])
         while block_index <= block_count:
-            print('Block: {}'.format(str(block_index)))
+            #print('Block: {}'.format(str(block_index)))
             logging.info('Block: {}'.format(str(block_index)))
             block_hash = bitcoin.rpc('getblockhash', [block_index])
             block = bitcoin.rpc('getblock', [block_hash])

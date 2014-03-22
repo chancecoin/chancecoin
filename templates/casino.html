@@ -90,9 +90,9 @@
 
 						    <tbody>
 						        <tr>
-						            <td>{{ supply }} CHA</td>
-						            <td>{{ bankroll }} CHA</td>
-						            <td>{{ bankroll*0.01 }} CHA</td>
+						            <td>{{ format("%.2f" % float(supply)) }} CHA</td>
+						            <td>{{ format("%.2f" % float(bankroll)) }} CHA</td>
+						            <td>{{ format("%.2f" % float(max_profit)) }} CHA</td>
 						        </tr>
 						    </tbody>
 						</table>

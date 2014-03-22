@@ -357,6 +357,16 @@ def bankroll (db):
     cursor.close()
     return bankroll_total
 
+def bankroll_excluding_address (db, address):
+    cursor = db.cursor()
+
+    cursor.execute('''SELECT * FROM balances \
+                      WHERE asset = ? and bankroll = ? and address != ?''', ('CHA',1,address))
+    bankroll_total = sum([balance['amount'] for balance in cursor.fetchall()])
+
+    cursor.close()
+    return bankroll_total
+
 def last_block (db):
     cursor = db.cursor()
     cursor.execute('''SELECT * FROM blocks WHERE block_index = (SELECT MAX(block_index) from blocks)''')
@@ -539,15 +549,11 @@ def devise (db, quantity, asset, dest, divisible=None):
         num = fmt.format(num)
         return num.rstrip('0')+'0' if num.rstrip('0')[-1] == '.' else num.rstrip('0')
 
-    if asset in ('leverage', 'price', 'odds', 'value', 'fraction'):
+    if asset in ('price', 'odds', 'value', 'fraction'):
         if dest == 'output':
             return norm(quantity, 6)
         elif dest == 'input':
-            # Hackish
-            if asset == 'leverage':
-                return round(quantity)
-            else:
-                return float(quantity)  # TODO: Float?!
+            return float(quantity)  # TODO: Float?!
 
     if asset in ('fee_multiplier',):
         return norm(D(quantity) / D(1e8), 6)

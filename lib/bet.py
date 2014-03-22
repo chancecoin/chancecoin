@@ -29,7 +29,7 @@ def validate (db, source, bet, chance, payout):
     if payout<1:
         problems.append('payout must be greater than 1')
 
-    if (payout-1)*bet > config.MAX_PROFIT*util.cha_supply(db):
+    if (payout-1)*bet > config.MAX_PROFIT*util.bankroll_excluding_address(db,source):
         problems.append('maximum payout exceeded')
 
     # For SQLite3
@@ -91,7 +91,7 @@ def parse (db, tx, message):
         block_hash = block['block_hash']
         roll = (int(block_hash,16) % 1000000000)/1000000000.0
         balances = util.get_balances(db, asset='CHA', filters=[{'field': 'bankroll', 'op': '==', 'value': 1},{'field': 'address', 'op': '!=', 'value': tx['source']}])
-        bankroll = util.bankroll(db)
+        bankroll = util.bankroll_excluding_address(db, tx['source'])
         if roll<chance:
             #The bet is a winning bet
             util.credit(db, tx['block_index'], tx['source'], 'CHA', (payout-1.0)*bet)

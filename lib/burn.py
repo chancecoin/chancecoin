@@ -11,7 +11,7 @@ from . import (util, config, exceptions, bitcoin, util)
 ID = 60
 
 
-def validate (db, source, destination, quantity, block_index=None, overburn=False):
+def validate (db, source, destination, quantity, block_index=None):
     problems = []
 
     # Check destination address.
@@ -28,13 +28,15 @@ def validate (db, source, destination, quantity, block_index=None, overburn=Fals
 
     return problems
 
-def create (db, source, quantity, overburn=False, unsigned=False):
+def create (db, source, quantity, unsigned=False):
     destination = config.UNSPENDABLE
-    problems = validate(db, source, destination, quantity, None, overburn=overburn)
+    problems = validate(db, source, destination, quantity, None)
     if problems: raise exceptions.BurnError(problems)
 
-    burns = util.get_burns(db, source=source, validity='valid')
+    burns = util.get_burns(db, validity='valid')
     already_burned = sum([burn['burned'] for burn in burns])
+    if quantity > (config.MAX_BURN * config.UNIT - already_burned):
+        raise exceptions.BurnError('Too many coins have already been burned.')
     return bitcoin.transaction(source, destination, quantity, config.MIN_FEE, None, unsigned=unsigned)
 
 def parse (db, tx, message=None):
@@ -42,7 +44,7 @@ def parse (db, tx, message=None):
     validity = 'valid'
 
     if validity == 'valid':
-        problems = validate(db, tx['source'], tx['destination'], tx['btc_amount'], tx['block_index'], overburn=False)
+        problems = validate(db, tx['source'], tx['destination'], tx['btc_amount'], tx['block_index'])
         if problems: validity = 'invalid: ' + ';'.join(problems)
 
         if tx['btc_amount'] != None:
@@ -52,15 +54,15 @@ def parse (db, tx, message=None):
 
     if validity == 'valid':
         # Calculate quantity of XPC earned. (Maximum 1 BTC in total, ever.)
-        cursor = db.cursor()
-        cursor.execute('''SELECT * FROM burns WHERE (validity = ? AND source = ?)''', ('valid', tx['source']))
-        burns = cursor.fetchall()
+        burns = util.get_burns(db, validity='valid')
         already_burned = sum([burn['burned'] for burn in burns])
-        burned = sent
+        max_burn = config.MAX_BURN*config.UNIT - already_burned
+        if sent > max_burn: burned = max_burn   # Exceeded maximum burn; earn what you can.
+        else: burned = sent
 
         total_time = D(config.BURN_END - config.BURN_START)
         partial_time = D(config.BURN_END - tx['block_index'])
-        multiplier = 1000 * (1 + D(.5) * (partial_time / total_time))
+        multiplier = config.MULTIPLIER + ((partial_time / total_time)*(config.MULTIPLIER_INITIAL-config.MULTIPLIER))
         earned = round(burned * multiplier)
 
         # For test suite.
