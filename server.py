@@ -47,14 +47,6 @@ class HomeHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-class FAQHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.render("faq.html")
-
-class ResourcesHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.render("resources.html")
-
 class ParticipateHandler(tornado.web.RequestHandler):
     def get(self):
         max_profit = config.MAX_PROFIT
