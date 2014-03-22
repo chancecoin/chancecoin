@@ -33,7 +33,6 @@ def create (db, source, quantity, overburn=False, unsigned=False):
     problems = validate(db, source, destination, quantity, None, overburn=overburn)
     if problems: raise exceptions.BurnError(problems)
 
-    # Check that a maximum of 1 BTC total is burned per address.
     burns = util.get_burns(db, source=source, validity='valid')
     already_burned = sum([burn['burned'] for burn in burns])
     return bitcoin.transaction(source, destination, quantity, config.MIN_FEE, None, unsigned=unsigned)
