@@ -29,9 +29,6 @@
 						        <button type="submit" class="pure-button pure-button-primary">Get balance</button>
 						    </fieldset>
 						</form>
-						{% if balance!=None %}
-						<p>{{ balance }} CHA</p>
-						{% end %}
 				</div>
 				<div class="pure-u-1-3 segment one-third">
 						<h2>Burn</h2>
@@ -107,14 +104,14 @@
 												<td>{{ order(1) }}</td>
 												<td></td>
 						        </tr>
-										{% end }
+										{% end %}
 										{% for order in orders_buy %}
 										<tr>
 												<td></td>
 												<td>{{ order(0) }}</td>
 												<td>{{ order(1) }}</td>
 										</tr>
-										{% end }
+										{% end %}
 						    </tbody>
 						</table>
 				</div>

@@ -10,10 +10,10 @@
 				<p>Chancecoin (CHA) is a protocol and coin used to bet on dice rolls in a decentralized casino. Owners of the coin may gamble on dice rolls, with randomness provided by Bitcoin block hashes. Owners of the coin are automatically invested in the house bankroll. The protocol, which is based heavily on Counterparty (XCP), is built on top of the Bitcoin blockchain. Coins are created by burning Bitcoins.</p>
 				<h2>Burn information</h2>
 				<ul>
-					<li><strong>Maximum coins burned</strong>: {{ max_burn }}</li>
+					<li><strong>Maximum coins burned</strong>: {{ '{:,}'.format(max_burn) }}</li>
 					<li><strong>Burn period</strong>: Bitcoin blocks {{ burn_start }} to {{ burn_end }}</li>
-					<li><strong>Coins burned in first block</strong>: {{ multiplier_initial }} CHA per 1 BTC</li>
-					<li><strong>Coins burned in last block</strong>: {{ multiplier }} CHA per 1 BTC (coins per block scaled linearly in between these blocks)</li>
+					<li><strong>Coins burned in first block</strong>: {{ '{:,}'.format(multiplier_initial) }} CHA per 1 BTC</li>
+					<li><strong>Coins burned in last block</strong>: {{ '{:,}'.format(multiplier) }} CHA per 1 BTC (coins per block scaled linearly in between these blocks)</li>
 					<li><strong>BTC burn address</strong>: <a href="http://blockchain.info/address/{{ unspendable }}">{{ unspendable }}</a></li>
 				</ul>
 				<h2>Casino information</h2>
