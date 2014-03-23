@@ -10,7 +10,7 @@ Chancecoin is a protocol and coin (CHA) used to bet on dice rolls in a decentral
 ## Burn information
 
   * **Maximum coins burned**: 1,000,000
-  * **Burn period**: Bitcoin blocks 291860 to 296180
+  * **Burn period**: Bitcoin blocks 291860 to 298340
   * **Coins burned in first block**: 1,500 CHA per 1 BTC
   * **Coins burned in last block**: 1,000 CHA per 1 BTC (coins per block scaled linearly in between these blocks)
   * **BTC burn address**: [1ChancecoinXXXXXXXXXXXXXXXXXZELUFD][1]
@@ -54,7 +54,7 @@ Donations to 1BckY64TE6VrjVcGMizYBE7gt22axnq6CM are welcome.
 
 ### From binary
 
-  * Download and run one of the precompiled Chancecoin wallet binaries.
+  * Download and run a precompiled Chancecoin wallet binary.
   * When you load the program for the first time, it will tell you where you need to create your configuration file, and it will also show you an example of a valid configuration file. Create this file and fill it in with the details of your Bitcoin RPC server.
   * Restart the Chancecoin wallet and you should be good to go.
 
