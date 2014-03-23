@@ -149,6 +149,7 @@ class WalletHandler(tornado.web.RequestHandler):
         if self.get_argument("form")=="balance":
             address = self.get_argument("address")
             wallet = util.get_address(db, address = address)
+            balance = None
             for balance in wallet['balances']:
                 if balance['asset']=='CHA':
                     balance = util.devise(db, balance['amount'], 'CHA', 'output')
