@@ -89,19 +89,44 @@ def parse (db, tx, message):
         # Determine if bet is a winner
         block = util.get_block(db, tx['block_index'])
         block_hash = block['block_hash']
-        roll = (int(block_hash,16) % 1000000000)/1000000000.0
-        balances = util.get_balances(db, asset='CHA', filters=[{'field': 'bankroll', 'op': '==', 'value': 1},{'field': 'address', 'op': '!=', 'value': tx['source']}])
+        roll = (int(block_hash,16) % 1000000000)/10000000.0
+        balances = util.get_balances(db, asset='CHA', order_by='amount', filters=[{'field': 'bankroll', 'op': '==', 'value': 1},{'field': 'address', 'op': '!=', 'value': tx['source']}])
         bankroll = util.bankroll_excluding_address(db, tx['source'])
         if roll<chance:
             #The bet is a winning bet
-            util.credit(db, tx['block_index'], tx['source'], 'CHA', (payout-1.0)*bet)
+            profit = int((payout-1.0)*bet)
+            util.credit(db, tx['block_index'], tx['source'], 'CHA', profit)
+            house_change = 0
             for balance in balances:
-                util.debit(db, tx['block_index'], tx['source'], 'CHA', (payout-1.0)*bet*(balance['amount']/bankroll))
+                if house_change < profit:
+                    balance_change = int(profit*(balance['amount']/bankroll))
+                    balance_change = min(profit-house_change, balance_change)
+                    house_change += balance_change
+                    util.debit(db, tx['block_index'], tx['source'], 'CHA', balance_change)
+            while house_change < profit:
+                for balance in balances:
+                    if house_change < profit and balance['amount']>1:
+                        balance_change = 1
+                        house_change += balance_change
+                        util.debit(db, tx['block_index'], tx['source'], 'CHA', balance_change)
         else:
             #The bet is a losing bet
-            util.debit(db, tx['block_index'], tx['source'], 'CHA', bet)
+            profit = int(bet)
+            util.debit(db, tx['block_index'], tx['source'], 'CHA', profit)
+            house_change = 0
             for balance in balances:
-                util.credit(db, tx['block_index'], tx['source'], 'CHA', bet*(balance['amount']/bankroll))
+                if house_change < profit:
+                    balance_change = int(profit*(balance['amount']/bankroll))
+                    balance_change = min(profit-house_change, balance_change)
+                    house_change += balance_change
+                    util.credit(db, tx['block_index'], tx['source'], 'CHA', balance_change)
+            while house_change < profit:
+                for balance in balances:
+                    if house_change < profit and balance['amount']>1:
+                        balance_change = 1
+                        house_change += balance_change
+                        util.credit(db, tx['block_index'], tx['source'], 'CHA', balance_change)
+            profit = -profit
 
     # Add parsed transaction to message-type–specific table.
     bindings = {
@@ -112,14 +137,11 @@ def parse (db, tx, message):
         'bet': bet,
         'chance': chance,
         'payout': payout,
-        'profit': 0,
+        'profit': profit,
         'validity': validity,
     }
     sql='insert into bets values(:tx_index, :tx_hash, :block_index, :source, :bet, :chance, :payout, :profit, :validity)'
     bet_parse_cursor.execute(sql, bindings)
-
-    # Match.
-    match(db, tx)
 
     bet_parse_cursor.close()
 

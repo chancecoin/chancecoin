@@ -61,8 +61,8 @@
 				    <thead>
 				        <tr>
 				            <th>Source address</th>
-				            <th>Bet size</th>
-				            <th>Chance to win</th>
+				            <th>Bet size (in CHA)</th>
+				            <th>Chance to win (%)</th>
 				            <th>Payout multiplier</th>
 				            <th>Profit</th>
 				        </tr>
@@ -71,17 +71,17 @@
 				    <tbody>
 				    		{% for bet in bets %}
 				        <tr>
-				            <td>{{bet['source']}}</td>
-										<td>{{bet['bet']}}</td>
-										<td>{{bet['chance']}}</td>
-										<td>{{bet['payout']}}</td>
-										<td>{{bet['profit']}}</td>
+										<td>{{ bet[0] }}</td>
+										<td>{{ bet[1] }}</td>
+										<td>{{ bet[2] }}</td>
+										<td>{{ bet[3] }}</td>
+										<td>{{ bet[4] }}</td>
 				        </tr>
 				        {% end %}
 				    </tbody>
 				</table>
 				<h2>My bets</h2>
-				<form class="pure-form pure-form-stacked" action="/casino" method="post">
+				<form class="pure-form" action="/casino" method="post">
 						<fieldset>
 								<input type="hidden" name="form" value="my_bets">
 
@@ -94,8 +94,8 @@
 						<thead>
 								<tr>
 										<th>Source address</th>
-										<th>Bet size</th>
-										<th>Chance to win</th>
+										<th>Bet size (in CHA)</th>
+										<th>Chance to win (%)</th>
 										<th>Payout multiplier</th>
 										<th>Profit</th>
 								</tr>
@@ -104,11 +104,11 @@
 						<tbody>
 								{% for bet in my_bets %}
 								<tr>
-										<td>{{bet['source']}}</td>
-										<td>{{bet['bet']}}</td>
-										<td>{{bet['chance']}}</td>
-										<td>{{bet['payout']}}</td>
-										<td>{{bet['profit']}}</td>
+										<td>{{ bet[0] }}</td>
+										<td>{{ bet[1] }}</td>
+										<td>{{ bet[2] }}</td>
+										<td>{{ bet[3] }}</td>
+										<td>{{ bet[4] }}</td>
 								</tr>
 								{% end %}
 						</tbody>

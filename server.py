@@ -22,6 +22,13 @@ try:
 except exceptions.ConfigurationError:
     pass
 
+def bet_tuples(bets):
+    bets_new = []
+    if bets!=None:
+        for bet in bets:
+            bets_new.append((bet['source'],util.devise(db, bet['bet'], 'CHA', 'output'),bet['chance'],bet['payout'],util.devise(db, bet['profit'], 'CHA', 'output')))
+    return bets_new
+
 def run_async(func):
     @wraps(func)
     def async_func(*args, **kwargs):
@@ -80,7 +87,7 @@ class CasinoHandler(tornado.web.RequestHandler):
         info = None
         error = None
         bets = util.get_bets(db, order_by='tx_index', validity='valid')
-        bets = bets[:100]
+        bets = bet_tuples(bets[:100])
         my_bets = []
         supply = util.devise(db, util.cha_supply(db), 'CHA', 'output')
         bankroll = util.devise(db, util.bankroll(db), 'CHA', 'output')
@@ -94,7 +101,7 @@ class CasinoHandler(tornado.web.RequestHandler):
         info = None
         error = None
         bets = util.get_bets(db, order_by='tx_index', validity='valid')
-        bets = bets[:100]
+        bets = bet_tuples(bets[:100])
         my_bets = []
         supply = util.devise(db, util.cha_supply(db), 'CHA', 'output')
         bankroll = util.devise(db, util.bankroll(db), 'CHA', 'output')
@@ -110,8 +117,9 @@ class CasinoHandler(tornado.web.RequestHandler):
                 info = "Thanks for betting!"
             except:
                 error = sys.exc_info()[1]
-        if self.get_argument("form")=="my_bets" and self.get_argument("address"):
+        elif self.get_argument("form")=="my_bets" and self.get_argument("address"):
             my_bets = util.get_bets(db, source = self.get_argument("address"), order_by='tx_index', validity='valid')
+            my_bets = bet_tuples(my_bets)
         self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, bankroll = bankroll, house_edge = config.HOUSE_EDGE, max_profit = max_profit, info = info, error = error)
 
 class WalletHandler(tornado.web.RequestHandler):

@@ -52,8 +52,6 @@ def log (db, command, category, bindings):
             logging.debug('Database: set validity of bet {} to {}.'.format(bindings['tx_hash'], bindings['validity']))
         elif category == 'order_matches':
             logging.debug('Database: set validity of order_match {} to {}.'.format(bindings['order_match_id'], bindings['validity']))
-        elif category == 'bet_matches':
-            logging.debug('Database: set validity of bet_match {} to {}.'.format(bindings['bet_match_id'], bindings['validity']))
         # TODO: elif category == 'balances':
             # logging.debug('Database: set balance of {} in {} to {}.'.format(bindings['address'], bindings['asset'], output(bindings['amount'], bindings['asset']).split(' ')[0]))
 
@@ -379,7 +377,7 @@ def last_block (db):
 
 def get_block (db, block_index):
     cursor = db.cursor()
-    cursor.execute('''SELECT * FROM blocks WHERE block_index = ?''', (block_index))
+    cursor.execute('''SELECT * FROM blocks WHERE block_index = ?''', (block_index, ))
     try:
         block = cursor.fetchall()[0]
     except IndexError:
