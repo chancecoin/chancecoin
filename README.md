@@ -60,7 +60,7 @@ Donations to 1BckY64TE6VrjVcGMizYBE7gt22axnq6CM are welcome.
 
 ### From source
 
-  * Git fetch .
+  * Git fetch https://github.com/chancecoin/chancecoin.git.
   * Install python3 and the following prerequisites: apsw, requests, appdirs, prettytable, python-dateutil, json-rpc, cherrypy, pycoin, pyzmq(v2.2%2B), tornado.
   * You can run the GUI via gui.py, or the command line interface via chancecoind.py.
   * Either way, you need to create a configuration file first. When you first run the program, it will tell you where you need to create your configuration file. Example.conf is an example of a valid configuration file. Create this file and fill it in with the details of your Bitcoin RPC server.
