@@ -696,12 +696,11 @@ def get_btcpays (db, validity=None, filters=None, order_by='tx_index', order_dir
     cursor.close()
     return do_order_by(results, order_by, order_dir)
 
-def get_bets (db, validity=None, source=None, show_empty=True, filters=None, order_by=None, order_dir='desc', start_block=None, end_block=None, filterop='and'):
+def get_bets (db, validity=None, source=None, filters=None, order_by=None, order_dir='desc', start_block=None, end_block=None, filterop='and'):
     if filters is None: filters = list()
     if filters and not isinstance(filters, list): filters = [filters,]
     if validity: filters.append({'field': 'validity', 'op': '==', 'value': validity})
     if source: filters.append({'field': 'source', 'op': '==', 'value': source})
-    if not show_empty: filters.append({'field': 'wager_remaining', 'op': '==', 'value': 0})
     cursor = db.cursor()
     cursor.execute('''SELECT * FROM bets%s'''
         % get_limit_to_blocks(start_block, end_block))

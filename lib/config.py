@@ -4,7 +4,7 @@ import hashlib
 
 UNIT = 100000000        # The same across currencies.
 
-UNITTEST_PREFIX = b'TESTXXXX'
+# Ports
 BITCOIND_RPC_PORT_LIVE = '8332'
 BITCOIND_RPC_PORT_TESTNET = '18332'
 RPC_HOST = 'localhost'
@@ -13,10 +13,18 @@ RPC_PORT_LIVE = '4000'
 BITCOIND_RPC_CONNECT = 'localhost'
 BITCOIND_RPC_USER = 'bitcoinrpc'
 RPC_USER = 'rpc'
+
+# Testnet, testcoin
 TESTNET = False
 TESTCOIN = False
+
+# Application name
+UNITTEST_PREFIX = b'TESTXXXX'
 PREFIX_TESTCOIN = b'CH'
 PREFIX_LIVECOIN = b'CHANCECO'
+APPAUTHOR = 'Chancecoin'
+APPNAME = 'chancecoin'
+API_LOG = 'api.error.log'
 CONFIG_FILENAME = 'chancecoin.conf'
 DATA_DIR_TESTNET = 'chancecoind.testnet.log'
 DATA_DIR_LIVE = 'chancecoin.log'
@@ -26,6 +34,7 @@ UNSPENDABLE_TESTNET_LIVECOIN = 'mvChancecoinXXXXXXXXXXXXXXXXW24Hef'
 UNSPENDABLE_LIVE_TESTCOIN = '1ChancecoinXXXXXXXXXXXXXXXXXZELUFD'
 UNSPENDABLE_LIVE_LIVECOIN = '1ChancecoinXXXXXXXXXXXXXXXXXZELUFD'
 
+# Burn period
 TESTNET_TESTCOIN_FIRST = 154908
 TESTNET_TESTCOIN_START = 154908
 TESTNET_TESTCOIN_END = 4017708
@@ -42,11 +51,9 @@ MAX_BURN = 1000000
 MULTIPLIER = 1000
 MULTIPLIER_INITIAL = 1500
 
-API_LOG = 'api.error.log'
+# Casino
 HOUSE_EDGE = 0.02 #0.02 means the house takes 2% edge
 MAX_PROFIT = 0.01 #0.01 means most you can win is 1% of the house bankroll
-APPAUTHOR = 'Chancecoin'
-APPNAME = 'chancecoin'
 
 # Versions
 CLIENT_VERSION_MAJOR = 1

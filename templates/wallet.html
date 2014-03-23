@@ -13,8 +13,11 @@
 				{% else %}
 				<p class="success">Chancecoin is up to date.</p>
 				{% end %}
-				{% if message!=None %}
-				<p class="info">{{ message }}</p>
+				{% if info!=None %}
+				<p class="info">{% raw info %}</p>
+				{% end %}
+				{% if error!=None %}
+				<p class="error">{% raw error %}</p>
 				{% end %}
 			</div>
 		</div>

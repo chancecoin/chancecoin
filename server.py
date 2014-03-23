@@ -12,11 +12,15 @@ from threading import Thread
 from functools import wraps
 
 import chancecoind
-from lib import (config, api, util, exceptions, bitcoin, blocks)
+from lib import (config, util, exceptions, bitcoin, blocks)
 from lib import (send, order, btcpay, bet, burn, cancel)
 
-chancecoind.set_options()
-db = util.connect_to_db()
+db = None
+try:
+    chancecoind.set_options()
+    db = util.connect_to_db()
+except exceptions.ConfigurationError:
+    pass
 
 def run_async(func):
     @wraps(func)
@@ -47,6 +51,14 @@ class HomeHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
+class ErrorHandler(tornado.web.RequestHandler):
+    def get(self):
+        error = 'An unknown error has occurred.'
+        info = None
+        if config.HAS_CONFIG==False:
+            error = 'You need to set up a Chancecoin config file at '+config.CONFIG_PATH+'. You can find an example config file <a href="https://raw2.github.com/chancecoin/chancecoin/master/example.conf">here</a>.'
+        self.render("error.html", error = error, info = info)
+
 class ParticipateHandler(tornado.web.RequestHandler):
     def get(self):
         max_profit = config.MAX_PROFIT
@@ -65,34 +77,42 @@ class CasinoHandler(tornado.web.RequestHandler):
     def get(self):
         updated = yield tornado.gen.Task(is_updated)
         version_updated = yield tornado.gen.Task(is_version_updated)
-        message = None
-        bets = util.get_bets(db)
+        info = None
+        error = None
+        bets = util.get_bets(db, order_by='tx_index', validity='valid')
+        bets = bets[:100]
         my_bets = []
         supply = util.devise(db, util.cha_supply(db), 'CHA', 'output')
         bankroll = util.devise(db, util.bankroll(db), 'CHA', 'output')
         max_profit = float(bankroll)*config.MAX_PROFIT
-        self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, bankroll = bankroll, house_edge = config.HOUSE_EDGE, max_profit = max_profit, message = message)
+        self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, bankroll = bankroll, house_edge = config.HOUSE_EDGE, max_profit = max_profit, info = info, error = error)
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
-        my_bets = []
         updated = yield tornado.gen.Task(is_updated)
         version_updated = yield tornado.gen.Task(is_version_updated)
-        message = None
-        bets = util.get_bets(db)
+        info = None
+        error = None
+        bets = util.get_bets(db, order_by='tx_index', validity='valid')
+        bets = bets[:100]
+        my_bets = []
         supply = util.devise(db, util.cha_supply(db), 'CHA', 'output')
         bankroll = util.devise(db, util.bankroll(db), 'CHA', 'output')
         max_profit = float(bankroll)*config.MAX_PROFIT
         if self.get_argument("form")=="roll" and self.get_argument("source") and self.get_argument("bet") and self.get_argument("payout") and self.get_argument("chance"):
             source = self.get_argument("source")
-            bet = util.devise(db, self.get_argument("bet"), 'CHA', 'input')
+            bet_amount = util.devise(db, self.get_argument("bet"), 'CHA', 'input')
             chance = util.devise(db, self.get_argument("chance"), 'value', 'input')
             payout = util.devise(db, self.get_argument("payout"), 'value', 'input')
-            unsigned_tx_hex = bet.create(db, args.source, bet, chance, payout, unsigned=False)
-            #bitcoin.transmit(unsigned_tx_hex, ask=False)
+            try:
+                unsigned_tx_hex = bet.create(db, source, bet_amount, chance, payout, unsigned=False)
+                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                info = "Thanks for betting!"
+            except:
+                error = sys.exc_info()[1]
         if self.get_argument("form")=="my_bets" and self.get_argument("address"):
-            my_bets = util.get_bets(db, source = self.get_argument("address"))
-        self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, bankroll = bankroll, house_edge = config.HOUSE_EDGE, max_profit = max_profit, message = message)
+            my_bets = util.get_bets(db, source = self.get_argument("address"), order_by='tx_index', validity='valid')
+        self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, bankroll = bankroll, house_edge = config.HOUSE_EDGE, max_profit = max_profit, info = info, error = error)
 
 class WalletHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
@@ -100,30 +120,32 @@ class WalletHandler(tornado.web.RequestHandler):
     def get(self):
         updated = yield tornado.gen.Task(is_updated)
         version_updated = yield tornado.gen.Task(is_version_updated)
-        message = None
+        info = None
+        error = None
         orders_sell = []
         orders_buy = []
         orders_sell_db = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'give_asset', 'op': '=', 'value': 'CHA'},{'field': 'get_asset', 'op': '==', 'value': 'BTC'}])
         orders_buy_db = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'get_asset', 'op': '=', 'value': 'CHA'},{'field': 'give_asset', 'op': '==', 'value': 'BTC'}])
-        for order in orders_sell_db:
-            orders_sell.append((util.devise(db, order['give_quantity'], 'CHA', 'output'),float(util.devise(db, order['give_quantity'], 'CHA', 'output'))/float(util.devise(db, order['get_quantity'], 'BTC', 'output'))))
-        for order in orders_buy_db:
-            orders_buy.append((util.devise(db, order['get_quantity'], 'CHA', 'output'),float(util.devise(db, order['get_quantity'], 'CHA', 'output'))/float(util.devise(db, order['give_quantity'], 'BTC', 'output'))))
-        self.render("wallet.html", wallet = None, updated = updated, version_updated = version_updated, orders_buy = orders_buy, orders_sell = orders_sell, message = message)
+        for order_sell in orders_sell_db:
+            orders_sell.append((util.devise(db, order_sell['give_quantity'], 'CHA', 'output'),float(util.devise(db, order_sell['give_quantity'], 'CHA', 'output'))/float(util.devise(db, order_sell['get_quantity'], 'BTC', 'output'))))
+        for order_buy in orders_buy_db:
+            orders_buy.append((util.devise(db, order_buy['get_quantity'], 'CHA', 'output'),float(util.devise(db, order_buy['get_quantity'], 'CHA', 'output'))/float(util.devise(db, order_buy['give_quantity'], 'BTC', 'output'))))
+        self.render("wallet.html", wallet = None, updated = updated, version_updated = version_updated, orders_buy = orders_buy, orders_sell = orders_sell, info = info, error = error)
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         updated = yield tornado.gen.Task(is_updated)
         version_updated = yield tornado.gen.Task(is_version_updated)
-        message = None
+        info = None
+        error = None
         orders_sell = []
         orders_buy = []
         orders_sell_db = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'give_asset', 'op': '=', 'value': 'CHA'},{'field': 'get_asset', 'op': '==', 'value': 'BTC'}])
         orders_buy_db = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'get_asset', 'op': '=', 'value': 'CHA'},{'field': 'give_asset', 'op': '==', 'value': 'BTC'}])
-        for order in orders_sell_db:
-            orders_sell.append((util.devise(db, order['give_quantity'], 'CHA', 'output'),float(util.devise(db, order['give_quantity'], 'CHA', 'output'))/float(util.devise(db, order['get_quantity'], 'BTC', 'output'))))
-        for order in orders_buy_db:
-            orders_buy.append((util.devise(db, order['get_quantity'], 'CHA', 'output'),float(util.devise(db, order['get_quantity'], 'CHA', 'output'))/float(util.devise(db, order['give_quantity'], 'BTC', 'output'))))
+        for order_sell in orders_sell_db:
+            orders_sell.append((util.devise(db, order_sell['give_quantity'], 'CHA', 'output'),float(util.devise(db, order_sell['give_quantity'], 'CHA', 'output'))/float(util.devise(db, order_sell['get_quantity'], 'BTC', 'output'))))
+        for order_buy in orders_buy_db:
+            orders_buy.append((util.devise(db, order_buy['get_quantity'], 'CHA', 'output'),float(util.devise(db, order_buy['get_quantity'], 'CHA', 'output'))/float(util.devise(db, order_buy['give_quantity'], 'BTC', 'output'))))
         if self.get_argument("form")=="balance":
             address = self.get_argument("address")
             wallet = util.get_address(db, address = address)
@@ -131,53 +153,76 @@ class WalletHandler(tornado.web.RequestHandler):
                 if balance['asset']=='CHA':
                     balance = util.devise(db, balance['amount'], 'CHA', 'output')
             if balance!=None:
-                message = "Your balance is "+balance+" CHA"
+                info = "Your balance is "+balance+" CHA"
         elif self.get_argument("form")=="send":
             source = self.get_argument("source")
             destination = self.get_argument("destination")
             quantity = util.devise(db, self.get_argument("quantity"), 'CHA', 'input')
-            unsigned_tx_hex = send.create(db, source, destination, quantity, 'CHA', unsigned=False)
-            #bitcoin.transmit(unsigned_tx_hex, ask=False)
+            try:
+                unsigned_tx_hex = send.create(db, source, destination, quantity, 'CHA', unsigned=False)
+                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                info = "Send successful"
+            except:
+                error = sys.exc_info()[1]
         elif self.get_argument("form")=="burn":
             source = self.get_argument("source")
             quantity = util.devise(db, self.get_argument("quantity"), 'CHA', 'input')
             try:
                 unsigned_tx_hex = burn.create(db, source, quantity, unsigned=False)
-                #bitcoin.transmit(unsigned_tx_hex, ask=False)
-                message = "Burn successful"
+                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                info = "Burn successful"
             except:
-                message = sys.exc_info()[1]
+                error = sys.exc_info()[1]
         elif self.get_argument("form")=="buy":
             source = self.get_argument("source")
             quantity = util.devise(db, self.get_argument("quantity"), 'CHA', 'input')
             price = util.devise(db, self.get_argument("price"), 'value', 'input')
             pricetimesquantity = util.devise(db, float(self.get_argument("quantity"))*float(self.get_argument("price")), 'BTC', 'input')
             expiration = 6 * 24 #24 hour order
-            unsigned_tx_hex = order.create(db, source, 'BTC', pricetimesquantity, 'CHA', quantity,
+            try:
+                unsigned_tx_hex = order.create(db, source, 'BTC', pricetimesquantity, 'CHA', quantity,
                                            expiration, 0, config.MIN_FEE / config.UNIT, unsigned=False)
-            #bitcoin.transmit(unsigned_tx_hex, ask=False)
+                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                info = "Buy order successful"
+            except:
+                error = sys.exc_info()[1]
         elif self.get_argument("form")=="sell":
             source = self.get_argument("source")
             quantity = util.devise(db, self.get_argument("quantity"), 'CHA', 'input')
             price = util.devise(db, self.get_argument("price"), 'value', 'input')
             pricetimesquantity = util.devise(db, float(self.get_argument("quantity"))*float(self.get_argument("price")), 'BTC', 'input')
             expiration = 6 * 24 #24 hour order
-            unsigned_tx_hex = order.create(db, source, 'CHA', quantity, 'BTC', pricetimesquantity,
-                                           expiration, 0, config.MIN_FEE / config.UNIT, unsigned=False)
-            #bitcoin.transmit(unsigned_tx_hex, ask=False)
-        self.render("wallet.html", updated = updated, version_updated = version_updated, orders_buy = orders_buy, orders_sell = orders_sell, message = message)
+            try:
+                unsigned_tx_hex = order.create(db, source, 'CHA', quantity, 'BTC', pricetimesquantity,
+                                               expiration, 0, config.MIN_FEE / config.UNIT, unsigned=False)
+                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                info = "Sell order successful"
+            except:
+                error = sys.exc_info()[1]
+        self.render("wallet.html", updated = updated, version_updated = version_updated, orders_buy = orders_buy, orders_sell = orders_sell, info = info, error = error)
 
 class Application(tornado.web.Application):
     def __init__(self):
-        handlers = [
-            (r"/", HomeHandler),
-            (r"/wallet", WalletHandler),
-            (r"/casino", CasinoHandler),
-            (r"/participate", ParticipateHandler),
-        ]
+        if db==None:
+            handlers = [
+                (r"/", ErrorHandler),
+                (r"/wallet", ErrorHandler),
+                (r"/casino", ErrorHandler),
+                (r"/participate", ErrorHandler),
+            ]
+        else:
+            handlers = [
+                (r"/", HomeHandler),
+                (r"/wallet", WalletHandler),
+                (r"/casino", CasinoHandler),
+                (r"/participate", ParticipateHandler),
+            ]
+        file_frozen = __file__
+        if getattr(sys, 'frozen', False):
+            file_frozen = sys.executable
         settings = dict(
-            template_path=os.path.join(os.path.dirname(__file__), "templates"),
-            static_path=os.path.join(os.path.dirname(__file__), "static"),
+            template_path=os.path.join(os.path.dirname(file_frozen), "templates"),
+            static_path=os.path.join(os.path.dirname(file_frozen), "static"),
             debug=True
         )
         tornado.web.Application.__init__(self, handlers, **settings)

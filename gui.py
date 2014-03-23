@@ -3,12 +3,13 @@ from threading import Thread
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtWebKit import *
+from PyQt4.QtNetwork import *
 from PyQt4 import QtGui, QtCore
 import time
 
 import server
 import chancecoind
-from lib import (config, api, util, exceptions, bitcoin, blocks)
+from lib import (config, util, exceptions, bitcoin, blocks)
 from lib import (send, order, btcpay, bet, burn, cancel)
 
 class ChancecoinThread(QtCore.QThread):
@@ -16,9 +17,12 @@ class ChancecoinThread(QtCore.QThread):
         QtCore.QThread.__init__(self)
 
     def run(self):
-        chancecoind.set_options()
-        db = util.connect_to_db()
-        blocks.follow(db)
+        try:
+            chancecoind.set_options()
+            db = util.connect_to_db()
+            blocks.follow(db)
+        except:
+            pass
 
 class ServerThread(QtCore.QThread):
     def __init__(self):

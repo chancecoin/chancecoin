@@ -4,12 +4,15 @@
 import os
 import argparse
 import json
+import random
+import string
 
 import decimal
 D = decimal.Decimal
 
 import sys
 import logging
+from logging import handlers
 import requests
 from prettytable import PrettyTable
 import unicodedata
@@ -24,7 +27,7 @@ import logging
 import configparser
 
 # Units
-from lib import (config, api, util, exceptions, bitcoin, blocks)
+from lib import (config, util, exceptions, bitcoin, blocks)
 from lib import (send, order, btcpay, bet, burn, cancel)
 if os.name == 'nt':
     from lib import util_windows
@@ -52,6 +55,8 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
     configfile.read(config_path)
     has_config = 'Default' in configfile
     print("Config file: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
+    config.CONFIG_PATH = config_path
+    config.HAS_CONFIG = has_config
 
     # testnet
     if testnet:
@@ -137,7 +142,8 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
     elif has_config and 'rpc-password' in configfile['Default'] and configfile['Default']['rpc-password']:
         config.RPC_PASSWORD = configfile['Default']['rpc-password']
     else:
-        raise exceptions.ConfigurationError('RPC password not set. (Use configuration file or --rpc-password=PASSWORD)')
+        config.RPC_PASSWORD = ''.join(random.choice(string.ascii_uppercase) for _ in range(32))
+        #raise exceptions.ConfigurationError('RPC password not set. (Use configuration file or --rpc-password=PASSWORD)')
 
     # Log
     if log_file:
@@ -466,9 +472,9 @@ if __name__ == '__main__':
         # print('Asset name:', args.string + checksum.compute(args.string))
 
     elif args.action == 'server':
-        api_server = api.APIServer()
-        api_server.daemon = True
-        api_server.start()
+        # api_server = api.APIServer()
+        # api_server.daemon = True
+        # api_server.start()
         blocks.follow(db)
 
     else:

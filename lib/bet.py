@@ -10,8 +10,8 @@ D = decimal.Decimal
 
 from . import (util, config, bitcoin, exceptions, util)
 
-FORMAT = '>HIQQdII'
-LENGTH = 2 + 4 + 8 + 8 + 8 + 4 + 4
+FORMAT = '>Qdd'
+LENGTH = 8 + 8 + 8
 ID = 40
 
 def validate (db, source, bet, chance, payout):
@@ -20,7 +20,7 @@ def validate (db, source, bet, chance, payout):
     if not bet:
         problems.append('zero bet')
 
-    if 1/chance!=payout*(1-config.HOUSE_EDGE):
+    if chance!=100/(payout/(1-config.HOUSE_EDGE)):
         problems.append('chance and payout are not congruent')
 
     if chance<0 or chance>100:
