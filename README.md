@@ -26,7 +26,7 @@ Chancecoin is a protocol and coin (CHA) used to bet on dice rolls in a decentral
 
 ## How do I buy CHA?
 
-During the burn period, all you need to do is send BTC to 1ChancecoinXXXXXXXXXXXXXXXXXZELUFD. You can do this using Bitcoin wallet software, or using the standard Chancecoin wallet or command line interface.
+During the burn period, you can burn BTC into CHA using the standard Chancecoin wallet or command line interface.
 
 After the burn period, you can still trade CHA for BTC on the decentralized exchange using the standard Chancecoin wallet or command line interface.
 
