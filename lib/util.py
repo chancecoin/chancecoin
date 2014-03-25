@@ -123,7 +123,7 @@ def log (db, command, category, bindings):
             logging.info('BTC Payment: {} paid {} to {} for order match {} ({}) [{}]'.format(bindings['source'], output(bindings['btc_amount'], 'BTC'), bindings['destination'], bindings['order_match_id'], bindings['tx_hash'], bindings['validity']))
 
         elif category == 'bets':
-            logging.info('Bet: {} bet {} with chance {} and payout {} [{}]'.format(bindings['source'], output(bindings['bet'], 'CHA'), bindings['chance'], bindings['payout'], bindings['validity']))
+            logging.info('Bet: {} bet {} with chance {} and payout {} and profit {} [{}]'.format(bindings['source'], output(bindings['bet'], 'CHA'), bindings['chance'], bindings['payout'], output(bindings['profit'], 'CHA'), bindings['validity']))
 
         elif category == 'burns':
             logging.info('Burn: {} burned {} for {} ({}) [{}]'.format(bindings['source'], output(bindings['burned'], 'BTC'), output(bindings['earned'], 'CHA'), bindings['tx_hash'], bindings['validity']))
