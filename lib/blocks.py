@@ -327,6 +327,14 @@ def get_tx_info (tx):
 
     # Get destination output and data output.
     destination, btc_amount, data = None, None, b''
+
+    # Check to see if this is a burn
+    for vout in tx['vout']:
+        if 'addresses' in vout['scriptPubKey']:
+            if vout['scriptPubKey']['addresses'][0] == config.UNSPENDABLE:
+                    address = vout['scriptPubKey']['addresses'][0]
+                    destination, btc_amount = address, round(D(vout['value']) * config.UNIT)
+
     for vout in tx['vout']:
         fee -= D(vout['value']) * config.UNIT
 
