@@ -4,6 +4,14 @@ import hashlib
 
 UNIT = 100000000        # The same across currencies.
 
+# Versions
+CLIENT_VERSION_MAJOR = 1
+CLIENT_VERSION_MINOR = 1
+CLIENT_VERSION = float(str(CLIENT_VERSION_MAJOR) + '.' + str(CLIENT_VERSION_MINOR))
+DB_VERSION_MAJOR = 1        # Major version changes the blocks or transactions table.
+DB_VERSION_MINOR = 1        # Minor version changes just the parsing.
+DB_VERSION = float(str(DB_VERSION_MAJOR) + '.' + str(DB_VERSION_MINOR))
+
 # Ports
 BITCOIND_RPC_PORT_LIVE = '8332'
 BITCOIND_RPC_PORT_TESTNET = '18332'
@@ -54,14 +62,6 @@ MULTIPLIER_INITIAL = 1500
 # Casino
 HOUSE_EDGE = 0.02 #0.02 means the house takes 2% edge
 MAX_PROFIT = 0.01 #0.01 means most you can win is 1% of the house bankroll
-
-# Versions
-CLIENT_VERSION_MAJOR = 1
-CLIENT_VERSION_MINOR = 0
-CLIENT_VERSION = float(str(CLIENT_VERSION_MAJOR) + '.' + str(CLIENT_VERSION_MINOR))
-DB_VERSION_MAJOR = 1        # Major version changes the blocks or transactions table.
-DB_VERSION_MINOR = 0        # Minor version changes just the parsing.
-DB_VERSION = float(str(DB_VERSION_MAJOR) + '.' + str(DB_VERSION_MINOR))
 
 # Bitcoin protocol
 # DUST_SIZE = 5430      # OP_RETURN
