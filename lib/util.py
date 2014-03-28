@@ -46,10 +46,8 @@ def log (db, command, category, bindings):
             return '<DivisionByZero>'
 
     if command == 'update':
-        if category == 'order':
-            logging.debug('Database: set validity of order {} to {}.'.format(bindings['tx_hash'], bindings['validity']))
-        elif category == 'bet':
-            logging.debug('Database: set validity of bet {} to {}.'.format(bindings['tx_hash'], bindings['validity']))
+        if category == 'bets':
+            logging.info('Bet: #{} set profit to {}'.format(bindings['tx_index'], output(bindings['profit'], 'CHA')))
         elif category == 'order_matches':
             logging.debug('Database: set validity of order_match {} to {}.'.format(bindings['order_match_id'], bindings['validity']))
         # TODO: elif category == 'balances':
@@ -123,7 +121,7 @@ def log (db, command, category, bindings):
             logging.info('BTC Payment: {} paid {} to {} for order match {} ({}) [{}]'.format(bindings['source'], output(bindings['btc_amount'], 'BTC'), bindings['destination'], bindings['order_match_id'], bindings['tx_hash'], bindings['validity']))
 
         elif category == 'bets':
-            logging.info('Bet: {} bet {} with chance {} and payout {} and profit {} [{}]'.format(bindings['source'], output(bindings['bet'], 'CHA'), bindings['chance'], bindings['payout'], output(bindings['profit'], 'CHA'), bindings['validity']))
+            logging.info('Bet: {} bet {} with chance {} and payout {} [{}]'.format(bindings['source'], output(bindings['bet'], 'CHA'), bindings['chance'], bindings['payout'], bindings['validity']))
 
         elif category == 'burns':
             logging.info('Burn: {} burned {} for {} ({}) [{}]'.format(bindings['source'], output(bindings['burned'], 'BTC'), output(bindings['earned'], 'CHA'), bindings['tx_hash'], bindings['validity']))
@@ -345,26 +343,6 @@ def cha_supply (db):
     cursor.close()
     return burn_total
 
-def bankroll (db):
-    cursor = db.cursor()
-
-    cursor.execute('''SELECT * FROM balances \
-                      WHERE asset = ? and bankroll = ?''', ('CHA',1))
-    bankroll_total = sum([balance['amount'] for balance in cursor.fetchall()])
-
-    cursor.close()
-    return bankroll_total
-
-def bankroll_excluding_address (db, address):
-    cursor = db.cursor()
-
-    cursor.execute('''SELECT * FROM balances \
-                      WHERE asset = ? and bankroll = ? and address != ?''', ('CHA',1,address))
-    bankroll_total = sum([balance['amount'] for balance in cursor.fetchall()])
-
-    cursor.close()
-    return bankroll_total
-
 def last_block (db):
     cursor = db.cursor()
     cursor.execute('''SELECT * FROM blocks WHERE block_index = (SELECT MAX(block_index) from blocks)''')
@@ -503,10 +481,9 @@ def credit (db, block_index, address, asset, amount, event=None):
         bindings = {
             'address': address,
             'asset': asset,
-            'amount': amount,
-            'bankroll': 1
+            'amount': amount
         }
-        sql='insert into balances values(:address, :asset, :amount, :bankroll)'
+        sql='insert into balances values(:address, :asset, :amount)'
         credit_cursor.execute(sql, bindings)
     elif len(balances) > 1:
         raise Exception

@@ -46,6 +46,8 @@ def parse_tx (db, tx):
                                 (False, tx['tx_hash']))
         logging.info('Unsupported transaction: hash {}; data {}'.format(tx['tx_hash'], tx['data']))
 
+    # resolve unresolved bets
+    bet.resolve(db)
 
     parse_tx_cursor.close()
 
@@ -140,8 +142,7 @@ def initialise(db):
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS balances(
                                  address TEXT,
                                  asset TEXT,
-                                 amount INTEGER,
-                                 bankroll BOOL DEFAULT 1
+                                 amount INTEGER
                                  )
                               ''')
     initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
@@ -241,14 +242,29 @@ def initialise(db):
                                  chance REAL,
                                  payout REAL,
                                  profit INTEGER,
+                                 cha_supply INTEGER,
                                  validity TEXT)
                               ''')
     initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
                                  block_index_idx ON bets (block_index)
                               ''')
-    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
-                                 expire_index_idx ON bets (expire_index)
+
+    # Bet
+    initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS bets(
+                                 tx_index INTEGER PRIMARY KEY,
+                                 tx_hash TEXT UNIQUE,
+                                 block_index INTEGER,
+                                 source TEXT,
+                                 bet INTEGER,
+                                 chance REAL,
+                                 payout REAL,
+                                 profit INTEGER,
+                                 validity TEXT)
                               ''')
+    initialise_cursor.execute('''CREATE INDEX IF NOT EXISTS
+                                 block_index_idx ON bets (block_index)
+                              ''')
+
 
     # Burns
     initialise_cursor.execute('''CREATE TABLE IF NOT EXISTS burns(

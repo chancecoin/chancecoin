@@ -75,7 +75,11 @@
 										<td>{{ bet[1] }}</td>
 										<td>{{ bet[2] }}</td>
 										<td>{{ bet[3] }}</td>
+										{% if bet[4]==0 %}
+										<td>Unresolved</td>
+										{% else %}
 										<td>{{ bet[4] }}</td>
+										{% end %}
 				        </tr>
 				        {% end %}
 				    </tbody>
@@ -108,7 +112,11 @@
 										<td>{{ bet[1] }}</td>
 										<td>{{ bet[2] }}</td>
 										<td>{{ bet[3] }}</td>
+										{% if bet[4]==0 %}
+										<td>Unresolved</td>
+										{% else %}
 										<td>{{ bet[4] }}</td>
+										{% end %}
 								</tr>
 								{% end %}
 						</tbody>
@@ -124,7 +132,6 @@
 						    <thead>
 						        <tr>
 						            <th>Total CHA</th>
-						            <th>Total CHA in bankroll</th>
 						            <th>Max profit</th>
 						        </tr>
 						    </thead>
@@ -132,7 +139,6 @@
 						    <tbody>
 						        <tr>
 						            <td>{{ '{:,.6f}'.format(float(supply)) }} CHA</td>
-						            <td>{{ '{:,.6f}'.format(float(bankroll)) }} CHA</td>
 						            <td>{{ '{:,.6f}'.format(float(max_profit)) }} CHA</td>
 						        </tr>
 						    </tbody>

@@ -58,6 +58,10 @@ class HomeHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
+class FreebiesHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render("freebies.html")
+
 class ErrorHandler(tornado.web.RequestHandler):
     def get(self):
         error = 'An unknown error has occurred.'
@@ -90,9 +94,8 @@ class CasinoHandler(tornado.web.RequestHandler):
         bets = bet_tuples(bets[:100])
         my_bets = []
         supply = util.devise(db, util.cha_supply(db), 'CHA', 'output')
-        bankroll = util.devise(db, util.bankroll(db), 'CHA', 'output')
-        max_profit = float(bankroll)*config.MAX_PROFIT
-        self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, bankroll = bankroll, house_edge = config.HOUSE_EDGE, max_profit = max_profit, info = info, error = error)
+        max_profit = float(supply)*config.MAX_PROFIT
+        self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, house_edge = config.HOUSE_EDGE, max_profit = max_profit, info = info, error = error)
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
@@ -104,8 +107,7 @@ class CasinoHandler(tornado.web.RequestHandler):
         bets = bet_tuples(bets[:100])
         my_bets = []
         supply = util.devise(db, util.cha_supply(db), 'CHA', 'output')
-        bankroll = util.devise(db, util.bankroll(db), 'CHA', 'output')
-        max_profit = float(bankroll)*config.MAX_PROFIT
+        max_profit = float(supply)*config.MAX_PROFIT
         if self.get_argument("form")=="roll" and self.get_argument("source") and self.get_argument("bet") and self.get_argument("payout") and self.get_argument("chance"):
             source = self.get_argument("source")
             bet_amount = util.devise(db, self.get_argument("bet"), 'CHA', 'input')
@@ -120,7 +122,7 @@ class CasinoHandler(tornado.web.RequestHandler):
         elif self.get_argument("form")=="my_bets" and self.get_argument("address"):
             my_bets = util.get_bets(db, source = self.get_argument("address"), order_by='tx_index', validity='valid')
             my_bets = bet_tuples(my_bets)
-        self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, bankroll = bankroll, house_edge = config.HOUSE_EDGE, max_profit = max_profit, info = info, error = error)
+        self.render("casino.html", bets = bets, my_bets = my_bets, updated = updated, version_updated = version_updated, supply = supply, house_edge = config.HOUSE_EDGE, max_profit = max_profit, info = info, error = error)
 
 class WalletHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
@@ -225,6 +227,7 @@ class Application(tornado.web.Application):
                 (r"/wallet", WalletHandler),
                 (r"/casino", CasinoHandler),
                 (r"/participate", ParticipateHandler),
+                (r"/freebies", FreebiesHandler),
             ]
         file_frozen = __file__
         if getattr(sys, 'frozen', False):

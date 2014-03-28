@@ -6,7 +6,15 @@ All wagers are in CHA.
 
 import struct
 import decimal
+import re
+import json
+import urllib3
+import math
+from datetime import *
+from dateutil import *
+from dateutil.tz import *
 D = decimal.Decimal
+import logging
 
 from . import (util, config, bitcoin, exceptions, util)
 
@@ -29,7 +37,7 @@ def validate (db, source, bet, chance, payout):
     if payout<1:
         problems.append('payout must be greater than 1')
 
-    if (payout-1)*bet > config.MAX_PROFIT*util.bankroll_excluding_address(db,source):
+    if (payout-1)*bet > config.MAX_PROFIT*util.cha_supply(db):
         problems.append('maximum payout exceeded')
 
     # For SQLite3
@@ -74,59 +82,14 @@ def parse (db, tx, message):
         problems = validate(db, tx['source'], bet, chance, payout)
         if problems: validity = 'invalid: ' + ';'.join(problems)
 
-    if bet == 0.0:
-        # The way to get out of being part of the bankroll is by betting 0 CHA.
-        # This will permanently turn the address off as a part of the bankroll.
-        bindings = {
-            'address': tx['source'],
-            'asset': 'CHA'
-        }
-        sql='update balances set bankroll = 0 where (address = :address and asset = :asset)'
-        bet_parse_cursor.execute(sql, bindings)
-
     # Debit bet amount
     if validity == 'valid':
-        # Determine if bet is a winner
-        block = util.get_block(db, tx['block_index'])
-        block_hash = block['block_hash']
-        roll = (int(block_hash,16) % 1000000000)/10000000.0
-        balances = util.get_balances(db, asset='CHA', order_by='amount', filters=[{'field': 'bankroll', 'op': '==', 'value': 1},{'field': 'address', 'op': '!=', 'value': tx['source']}])
-        bankroll = util.bankroll_excluding_address(db, tx['source'])
-        if roll<chance:
-            #The bet is a winning bet
-            profit = int((payout-1.0)*bet)
-            util.credit(db, tx['block_index'], tx['source'], 'CHA', profit)
-            house_change = 0
-            for balance in balances:
-                if house_change < profit:
-                    balance_change = int(profit*(balance['amount']/bankroll))
-                    balance_change = min(profit-house_change, balance_change)
-                    house_change += balance_change
-                    util.debit(db, tx['block_index'], tx['source'], 'CHA', balance_change)
-            while house_change < profit:
-                for balance in balances:
-                    if house_change < profit and balance['amount']>1:
-                        balance_change = 1
-                        house_change += balance_change
-                        util.debit(db, tx['block_index'], tx['source'], 'CHA', balance_change)
-        else:
-            #The bet is a losing bet
-            profit = int(bet)
-            util.debit(db, tx['block_index'], tx['source'], 'CHA', profit)
-            house_change = 0
-            for balance in balances:
-                if house_change < profit:
-                    balance_change = int(profit*(balance['amount']/bankroll))
-                    balance_change = min(profit-house_change, balance_change)
-                    house_change += balance_change
-                    util.credit(db, tx['block_index'], tx['source'], 'CHA', balance_change)
-            while house_change < profit:
-                for balance in balances:
-                    if house_change < profit and balance['amount']>1:
-                        balance_change = 1
-                        house_change += balance_change
-                        util.credit(db, tx['block_index'], tx['source'], 'CHA', balance_change)
-            profit = -profit
+        # The gambler pays the bet
+        util.debit(db, tx['block_index'], tx['source'], 'CHA', bet)
+        # The bet will be resolved later
+
+    # get CHA supply
+    cha_supply = util.cha_supply(db)
 
     # Add parsed transaction to message-type–specific table.
     bindings = {
@@ -137,12 +100,70 @@ def parse (db, tx, message):
         'bet': bet,
         'chance': chance,
         'payout': payout,
-        'profit': profit,
+        'profit': 0,
+        'cha_supply': cha_supply,
         'validity': validity,
     }
-    sql='insert into bets values(:tx_index, :tx_hash, :block_index, :source, :bet, :chance, :payout, :profit, :validity)'
+    sql='insert into bets values(:tx_index, :tx_hash, :block_index, :source, :bet, :chance, :payout, :profit, :cha_supply, :validity)'
     bet_parse_cursor.execute(sql, bindings)
 
     bet_parse_cursor.close()
+
+def resolve(db):
+    def combinations(n,k):
+        if k>n:
+            return 0
+        return math.factorial(n)/math.factorial(k)/math.factorial(n-k)
+    cursor = db.cursor()
+
+    # Get unresolved bets
+    bets = list(cursor.execute('''SELECT * FROM bets WHERE profit=?''', (0,)))
+    utc_zone = tz.tzutc()
+    local_zone = tz.tzlocal()
+    ny_zone = tz.gettz('America/New York')
+    for bet in bets:
+
+        block = util.get_block(db, bet['block_index'])
+        block_time = datetime.fromtimestamp(int(block['block_time'])).replace(tzinfo=local_zone)
+        block_time_utc = block_time.astimezone(utc_zone)
+        block_time_ny = block_time.astimezone(ny_zone)
+
+        if block_time_ny.hour>=23 and block_time_ny.minute>=56:
+            search_data = block_time_ny.timedelta(days=1).strftime('%d/%m/%Y')
+        else:
+            search_date = block_time_ny.strftime('%d/%m/%Y')
+        http = urllib3.PoolManager()
+        lotto = http.request('GET', 'http://nylottery.ny.gov/wps/PA_NYSLNumberCruncher/NumbersServlet?game=quick&action=winningnumbers&startSearchDate='+search_date+'&endSearchDate=&pageNo=&last=&perPage=999&sort=').data
+        lotto = lotto.decode("utf-8")
+        lotto = json.loads(lotto)
+        for draw in lotto['draw']:
+            draw_time =  datetime.strptime(draw['date'], '%m/%d/%Y %H:%M').replace(tzinfo=ny_zone)
+            if draw_time>block_time_ny:
+                numbers = draw['numbersDrawn']
+                N = combinations(80,20)
+                n = 0
+                i = 1
+                for number in numbers:
+                    n += combinations(number-1,i)
+                    i += 1
+                roll = n/(N-1)*100
+                chance, payout, bet_amount, cha_supply = bet['chance'], bet['payout'], bet['bet'], bet['cha_supply']
+                if roll<chance:
+                    # the bet is a winner
+                    # amount won is b*p*(1-e)*(c-b)/(c-b*p*(1-e)), but (1-e) is already factored into the payout
+                    credit = int(bet_amount*payout*(cha_supply-bet_amount)/(cha_supply-bet_amount*payout))
+                    profit = credit - bet_amount
+                    util.credit(db, bet['block_index'], bet['source'], 'CHA', credit)
+                else:
+                    # the bet is a loser
+                    profit = -bet_amount
+                bindings = {
+                    'profit': profit,
+                    'tx_index': bet['tx_index']
+                }
+                sql='update bets set profit = :profit where tx_index = :tx_index'
+                cursor.execute(sql, bindings)
+                break
+        roll = 0
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
