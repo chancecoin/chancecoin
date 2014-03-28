@@ -1,5 +1,5 @@
 # Changelog
-* v1.01 - new bet resolve logic
+* v1.1 - new bet resolve logic
 * v1.0 — initial release
 
 # Chancecoin - Participate
