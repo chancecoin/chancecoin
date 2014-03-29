@@ -120,7 +120,7 @@ def resolve(db):
     bets = list(cursor.execute('''SELECT * FROM bets WHERE profit=?''', (0,)))
     utc_zone = tz.tzutc()
     local_zone = tz.tzlocal()
-    ny_zone = tz.gettz('America/New York')
+    ny_zone = tz.gettz('America/New_York')
     for bet in bets:
 
         block = util.get_block(db, bet['block_index'])
@@ -146,13 +146,16 @@ def resolve(db):
                 for number in numbers:
                     n += combinations(number-1,i)
                     i += 1
-                roll = n/(N-1)*100
+                roll1 = n/(N-1)*100
+                roll2 = (int(bet['tx_hash'][10:],16) % 1000000000)/1000000000.0
+                roll = (roll1 + roll2) % 2
                 chance, payout, bet_amount, cha_supply = bet['chance'], bet['payout'], bet['bet'], bet['cha_supply']
                 if roll<chance:
                     # the bet is a winner
-                    # amount won is b*p*(1-e)*(c-b)/(c-b*p*(1-e)), but (1-e) is already factored into the payout
-                    credit = int(bet_amount*payout*(cha_supply-bet_amount)/(cha_supply-bet_amount*payout))
-                    profit = credit - bet_amount
+                    # the gambler wins b*(p*(1-e)-1)*c/(c-b*p*(1-e)) CHA, but we already debited b CHA earlier
+                    # also note that the (1-e) is already factored into the payout
+                    profit = int(bet_amount*(payout-1)*cha_supply/(cha_supply-bet_amount*payout))
+                    credit = profit + bet_amount
                     util.credit(db, bet['block_index'], bet['source'], 'CHA', credit)
                 else:
                     # the bet is a loser

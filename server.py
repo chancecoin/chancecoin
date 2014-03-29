@@ -62,6 +62,18 @@ class FreebiesHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("freebies.html")
 
+class TechnicalHandler(tornado.web.RequestHandler):
+    def get(self):
+        max_profit = config.MAX_PROFIT
+        house_edge = config.HOUSE_EDGE
+        burn_start = config.BURN_START
+        burn_end = config.BURN_END
+        unspendable = config.UNSPENDABLE
+        max_burn = config.MAX_BURN
+        multiplier = config.MULTIPLIER
+        multiplier_initial = config.MULTIPLIER_INITIAL
+        self.render("technical.html", max_profit = max_profit, house_edge = house_edge, burn_start = burn_start, burn_end = burn_end, unspendable = unspendable, max_burn = max_burn, multiplier = multiplier, multiplier_initial = multiplier_initial)
+
 class ErrorHandler(tornado.web.RequestHandler):
     def get(self):
         error = 'An unknown error has occurred.'
@@ -228,6 +240,7 @@ class Application(tornado.web.Application):
                 (r"/casino", CasinoHandler),
                 (r"/participate", ParticipateHandler),
                 (r"/freebies", FreebiesHandler),
+                (r"/technical", TechnicalHandler),
             ]
         file_frozen = __file__
         if getattr(sys, 'frozen', False):

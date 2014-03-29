@@ -7,7 +7,7 @@
 			<div class="pure-u-1">
 				<h1>Participate</h1>
 				<h2>Description</h2>
-				<p>Chancecoin is a protocol and coin (CHA) used to bet on dice rolls in a decentralized casino. Owners of the coin may gamble on dice rolls, with randomness provided by Bitcoin block hashes. Owners of the coin are automatically invested in the house bankroll. The protocol, which is based on Counterparty (XCP), is built on top of the Bitcoin blockchain. Coins are created by burning Bitcoins.</p>
+				<p>Chancecoin is a protocol and coin (CHA) used to bet on dice rolls in a decentralized casino. Owners of the coin may gamble on dice rolls, with randomness provided by published NY Lottery Quick Draw numbers. Owners of the coin are automatically invested in the house bankroll. The protocol, which is based on Counterparty (XCP), is built on top of the Bitcoin blockchain. Coins are created by burning Bitcoins.</p>
 				<h2>Burn information</h2>
 				<ul>
 					<li><strong>Maximum coins burned</strong>: {{ '{:,}'.format(max_burn) }}</li>
@@ -15,6 +15,7 @@
 					<li><strong>Coins burned in first block</strong>: {{ '{:,}'.format(multiplier_initial) }} CHA per 1 BTC</li>
 					<li><strong>Coins burned in last block</strong>: {{ '{:,}'.format(multiplier) }} CHA per 1 BTC (coins per block scaled linearly in between these blocks)</li>
 					<li><strong>BTC burn address</strong>: <a href="http://blockchain.info/address/{{ unspendable }}">{{ unspendable }}</a></li>
+					<li><strong>Maximum coins burned per address</strong>: unlimited</li>
 				</ul>
 
 				<h2>Casino information</h2>
@@ -36,12 +37,36 @@
 				</ul>
 
 				<h2>How do I buy CHA?</h2>
-				<p>During the burn period, you can burn BTC into CHA by sending BTC to {{ unspendable }} using a Bitcoin client. You can also burn BTC into CHA using the standard Chancecoin wallet or command line interface.</p>
-				<p>After the burn period, you can still trade CHA for BTC on the decentralized exchange using the standard Chancecoin wallet or command line interface.</p>
+				<p>During the burn period, you can burn BTC into CHA using the standard Chancecoin wallet or command line interface. You can also burn BTC into CHA by sending BTC to {{ unspendable }} using a Bitcoin client or Blockchain.info. After the burn period, you can still trade CHA for BTC on the decentralized exchange using the standard Chancecoin wallet or command line interface.</p>
+				<h3>Burning with the Chancecoin wallet</h3>
+				<p>Open the wallet software and click on "Wallet." Under the "Burn" section, fill in your address and desired quantity to burn. Then click "Burn."</p>
+				<h3>Burning with the command line interface</h3>
+				<p>Run "python chancecoind.py burn --source SOURCE --quantity QUANTITY"</p>
+				<h3>Burning with a Bitcoin client</h3>
+				<p>To burn with a Bitcoin client, simply send the amount of BTC you want to burn to {{ unspendable }}. All inputs must come from the same address (this is the address to which CHA will be credited). As long as one of the outputs is {{ unspendable }}, the burn will be recognized.</p>
+				<h3>Burning with Blockchain.info</h3>
+				<p>To burn using a Blockchain.info wallet, do the following:</p>
+				<ol>
+					<li>Log in to your wallet.</li>
+					<li>Click "Send Money."</li>
+					<li>Choose "Custom" under "Transaction Type."</li>
+					<li>Choose a single "From" address. This is the address to which CHA will be credited.</li>
+					<li>Enter {{ unspendable}} for the "To" address.</li>
+					<li>Enter the amount of BTC you want to burn.</li>
+					<li>Use 0.0001 for the "Miner's Fee."</li>
+					<li>Choose any "Change Address" as needed.</li>
+					<li>Click "Review Payment" and then send the payment.</li>
+				</ol>
+
 				<h2>How do I gamble?</h2>
-				<p>You can gamble using the standard Chancecoin wallet or command line interface. Choose the amount of CHA you want to bet, and the desired payout or odds of winning.</p>
+				<p>You can gamble using the standard Chancecoin wallet or command line interface.</p>
+				<h3>Gambling with the Chancecoin wallet</h3>
+				<p>Open the wallet software and click on "Casino." Choose the amount of CHA you want to bet, and the desired payout or odds of winning (one will determine the other). Then click "Roll the Dice."</p>
+				<h3>Gambling with the command line interface</h3>
+				<p>Run "python chancecoind.py bet --source SOURCE --bet BET --chance CHANCE --payout PAYOUT." Note that the chance of winning and the payout must be congruent. This is best illustrated with an example: if the chance of winning is 50 (meaning 50%), then the payout is 1/0.5*(1-{{ house_edge }})={{ 1/0.5*(1-house_edge) }}, where {{ house_edge }} is the house edge.</p>
+
 				<h2>How do I bankroll the house?</h2>
-				<p>By owning CHA, you are automatically bankrolling the house. As people make bets, your balance will fluctuate. On average, you can expect to earn the house edge of {{ house_edge*100 }}% per bet.</p>
+				<p>By owning CHA, you are automatically bankrolling the house. On average, you can expect to earn the house edge of {{ house_edge*100 }}% per bet.</p>
 
 				<h2>Donations</h2>
 				<p>Donations to 1BckY64TE6VrjVcGMizYBE7gt22axnq6CM are welcome.</p>
