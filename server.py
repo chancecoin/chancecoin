@@ -92,7 +92,8 @@ class ParticipateHandler(tornado.web.RequestHandler):
         max_burn = config.MAX_BURN
         multiplier = config.MULTIPLIER
         multiplier_initial = config.MULTIPLIER_INITIAL
-        self.render("participate.html", max_profit = max_profit, house_edge = house_edge, burn_start = burn_start, burn_end = burn_end, unspendable = unspendable, max_burn = max_burn, multiplier = multiplier, multiplier_initial = multiplier_initial)
+        version = config.CLIENT_VERSION
+        self.render("participate.html", max_profit = max_profit, house_edge = house_edge, burn_start = burn_start, burn_end = burn_end, unspendable = unspendable, max_burn = max_burn, multiplier = multiplier, multiplier_initial = multiplier_initial, version = version)
 
 class CasinoHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
