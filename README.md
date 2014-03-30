@@ -1,5 +1,6 @@
 # Changelog
-* v1.1 - new bet resolve logic
+* v1.2 - burns from multiple inputs are credited to first input, other minor changes
+* v1.1 - new bet resolve logic using NY Lottery Quick Draw
 * v1.0 — initial release
 
 # Chancecoin - Participate
