@@ -33,8 +33,29 @@ def order_tuples(orders):
     orders_new = []
     if orders!=None:
         for order in orders:
-            orders_new.append((util.devise(db, order['give_quantity'], 'CHA', 'output'),float(util.devise(db, order['give_quantity'], 'CHA', 'output'))/float(util.devise(db, order['get_quantity'], 'BTC', 'output'))))
+            if order['get_asset']=='CHA':
+                cha_side = 'get_amount'
+                btc_side = 'give_amount'
+                buysell = 'buy'
+            else:
+                cha_side = 'give_amount'
+                btc_side = 'get_amount'
+                buysell = 'sell'
+            orders_new.append((util.devise(db, order[cha_side], 'CHA', 'output'),float(util.devise(db, order[btc_side], 'BTC', 'output'))/float(util.devise(db, order[cha_side], 'CHA', 'output')), util.devise(db, order[btc_side], 'BTC', 'output'), buysell, order['tx_hash']))
     return orders_new
+
+def order_match_tuples(order_matches):
+    order_matches_new = []
+    if order_matches!=None:
+        for order_match in order_matches:
+            if order_match['forward_asset']=='BTC':
+                btc = util.devise(db, order_match['forward_amount'], 'BTC', 'output')
+                cha = util.devise(db, order_match['backward_amount'], 'CHA', 'output')
+            else:
+                btc = util.devise(db, order_match['backward_amount'], 'BTC', 'output')
+                cha = util.devise(db, order_match['forward_amount'], 'CHA', 'output')
+            order_matches_new.append((btc,cha,order_match['id']))
+    return order_matches_new
 
 def run_async(func):
     @wraps(func)
@@ -150,8 +171,8 @@ class CasinoHandler(tornado.web.RequestHandler):
             chance = util.devise(db, self.get_argument("chance"), 'value', 'input')
             payout = util.devise(db, self.get_argument("payout"), 'value', 'input')
             try:
-                unsigned_tx_hex = bet.create(db, source, bet_amount, chance, payout, unsigned=False)
-                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                tx_hex = bet.create(db, source, bet_amount, chance, payout, unsigned=False)
+                bitcoin.transmit(tx_hex, ask=False)
                 info = "Thanks for betting!"
             except:
                 error = sys.exc_info()[1]
@@ -173,10 +194,10 @@ class WalletHandler(tornado.web.RequestHandler):
         block_count_db, block_count_bitcoin = yield tornado.gen.Task(get_status)
         info = None
         error = None
-        orders_sell = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'give_asset', 'op': '=', 'value': 'CHA'},{'field': 'get_asset', 'op': '==', 'value': 'BTC'}])
-        orders_buy = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'get_asset', 'op': '=', 'value': 'CHA'},{'field': 'give_asset', 'op': '==', 'value': 'BTC'}])
-        orders_sell = order_tuples(orders_sell)
-        orders_buy = order_tuples(orders_buy)
+        orders_sell = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'give_asset', 'op': '==', 'value': 'CHA'},{'field': 'get_asset', 'op': '==', 'value': 'BTC'}])
+        orders_buy = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'get_asset', 'op': '==', 'value': 'CHA'},{'field': 'give_asset', 'op': '==', 'value': 'BTC'}])
+        orders_sell = sorted(order_tuples(orders_sell), key=lambda tup: tup[1], reverse=True)
+        orders_buy = sorted(order_tuples(orders_buy), key=lambda tup: tup[1], reverse=True)
         my_orders = None
         my_order_matches = None
         balance = None
@@ -190,10 +211,10 @@ class WalletHandler(tornado.web.RequestHandler):
         block_count_db, block_count_bitcoin = yield tornado.gen.Task(get_status)
         info = None
         error = None
-        orders_sell = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'give_asset', 'op': '=', 'value': 'CHA'},{'field': 'get_asset', 'op': '==', 'value': 'BTC'}])
-        orders_buy = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'get_asset', 'op': '=', 'value': 'CHA'},{'field': 'give_asset', 'op': '==', 'value': 'BTC'}])
-        orders_sell = order_tuples(orders_sell)
-        orders_buy = order_tuples(orders_buy)
+        orders_sell = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'give_asset', 'op': '==', 'value': 'CHA'},{'field': 'get_asset', 'op': '==', 'value': 'BTC'}])
+        orders_buy = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, filters=[{'field': 'get_asset', 'op': '==', 'value': 'CHA'},{'field': 'give_asset', 'op': '==', 'value': 'BTC'}])
+        orders_sell = sorted(order_tuples(orders_sell), key=lambda tup: tup[1], reverse=True)
+        orders_buy = sorted(order_tuples(orders_buy), key=lambda tup: tup[1], reverse=True)
         my_orders = None
         my_order_matches = None
         balance = None
@@ -212,23 +233,25 @@ class WalletHandler(tornado.web.RequestHandler):
             address = self.get_argument("address")
             try:
                 my_orders = util.get_orders(db, validity='valid', show_empty=False, show_expired=False, source=address)
-                my_order_matches = util.get_orders(db, validity='pending', is_mine=True, address=address)
+                my_orders = order_tuples(my_orders)
+                my_order_matches = util.get_order_matches(db, validity='pending', is_mine=True, address=address)
+                my_order_matches = order_match_tuples(my_order_matches)
             except:
                 my_orders = None
                 my_order_matches = None
         elif self.get_argument("form")=="btcpay":
             order_match_id = self.get_argument("order_match_id")
             try:
-                unsigned_tx_hex = btcpay.create(db, order_match_id, unsigned=False)
-                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                tx_hex = btcpay.create(db, order_match_id, unsigned=False)
+                bitcoin.transmit(tx_hex, ask=False)
                 info = "BTC payment successful"
             except:
                 error = sys.exc_info()[1]
         elif self.get_argument("form")=="cancel":
             tx_hash = self.get_argument("tx_hash")
             try:
-                unsigned_tx_hex = cancel.create(db, tx_hash, unsigned=False)
-                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                tx_hex = cancel.create(db, tx_hash, unsigned=False)
+                bitcoin.transmit(tx_hex, ask=False)
                 info = "Cancel successful"
             except:
                 error = sys.exc_info()[1]
@@ -237,8 +260,8 @@ class WalletHandler(tornado.web.RequestHandler):
             destination = self.get_argument("destination")
             quantity = util.devise(db, self.get_argument("quantity"), 'CHA', 'input')
             try:
-                unsigned_tx_hex = send.create(db, source, destination, quantity, 'CHA', unsigned=False)
-                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                tx_hex = send.create(db, source, destination, quantity, 'CHA', unsigned=False)
+                bitcoin.transmit(tx_hex, ask=False)
                 info = "Send successful"
             except:
                 error = sys.exc_info()[1]
@@ -246,8 +269,8 @@ class WalletHandler(tornado.web.RequestHandler):
             source = self.get_argument("source")
             quantity = util.devise(db, self.get_argument("quantity"), 'CHA', 'input')
             try:
-                unsigned_tx_hex = burn.create(db, source, quantity, unsigned=False)
-                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                tx_hex = burn.create(db, source, quantity, unsigned=False)
+                bitcoin.transmit(tx_hex, ask=False)
                 info = "Burn successful"
             except:
                 error = sys.exc_info()[1]
@@ -259,9 +282,9 @@ class WalletHandler(tornado.web.RequestHandler):
             pricetimesquantity = int(pricetimesquantity*config.UNIT)
             expiration = 6 * 24 #24 hour order
             try:
-                unsigned_tx_hex = order.create(db, source, 'BTC', pricetimesquantity, 'CHA', quantity,
+                tx_hex = order.create(db, source, 'BTC', pricetimesquantity, 'CHA', quantity,
                                            expiration, 0, config.MIN_FEE, unsigned=False)
-                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                bitcoin.transmit(tx_hex, ask=False)
                 info = "Buy order successful"
             except:
                 error = sys.exc_info()[1]
@@ -273,9 +296,9 @@ class WalletHandler(tornado.web.RequestHandler):
             pricetimesquantity = int(pricetimesquantity*config.UNIT)
             expiration = 6 * 24 #24 hour order
             try:
-                unsigned_tx_hex = order.create(db, source, 'CHA', quantity, 'BTC', pricetimesquantity,
+                tx_hex = order.create(db, source, 'CHA', quantity, 'BTC', pricetimesquantity,
                                                expiration, 0, config.MIN_FEE, unsigned=False)
-                bitcoin.transmit(unsigned_tx_hex, ask=False)
+                bitcoin.transmit(tx_hex, ask=False)
                 info = "Sell order successful"
             except:
                 error = sys.exc_info()[1]
