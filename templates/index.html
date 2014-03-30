@@ -13,9 +13,9 @@
 						<h1 class="splash-head">
 						Decentralized dice betting
 						</h1>
-            <h2 class="splash-subhead">
-            Chancecoin is a coin and a casino. Use it to bet on dice rolls, or bankroll the house.
-            </h2>
+						<h2 class="splash-subhead">
+						Chancecoin is a coin and a casino. Use it to bet on dice rolls, or bankroll the house.
+						</h2>
 					</div>
 				</div>
 			</div>
@@ -40,36 +40,10 @@
 		</div>
 
 		<div class="pure-g-r section">
-			<div class="pure-u-1">
+			<div class="pure-u-1 segment">
 				<p>What are you waiting for? <a href="/participate">Roll the dice</a> on Chancecoin today.</p>
 			</div>
 		</div>
 
-		<div class="pure-g-r section">
-			<div class="pure-u-1">
-			    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-					<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-			    <script type="text/javascript">
-			      google.load("visualization", "1", {packages:["corechart"]});
-			      google.setOnLoadCallback(drawChart);
-			      var jsonData = $.ajax({
-								url: "http://chancecoin.com/blockchain_balance.php",
-			          dataType:"json",
-			          async: false
-			          }).responseText;
-						alert(jsonData);
-						function drawChart() {
-				        var data = new google.visualization.DataTable(jsonData);
-
-				        var options = {
-				          title: 'Burns to date'
-				        };
-
-				        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-				        chart.draw(data, options);
-				      }
-			    </script>
-					<div id="chart_div" style="width: 900px; height: 500px;"></div>
-			</div>
-		</div>
+</div>
 {% end %}

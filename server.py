@@ -96,7 +96,8 @@ def get_status(callback):
 
 class HomeHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("index.html")
+        supply = util.devise(db, util.cha_supply(db), 'CHA', 'output')
+        self.render("index.html", supply = supply)
 
 class FreebiesHandler(tornado.web.RequestHandler):
     def get(self):

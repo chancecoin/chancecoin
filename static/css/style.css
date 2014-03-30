@@ -81,6 +81,11 @@ body {
 	width: 32%;
 }
 
+.one-half {
+	width: 48%;
+	clear: none;
+}
+
 .two-thirds {
 	width: 64%;
 }

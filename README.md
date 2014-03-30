@@ -40,7 +40,7 @@ Run "python chancecoind.py burn --source SOURCE --quantity QUANTITY"
 
 ### Burning with a Bitcoin client
 
-To burn with a Bitcoin client, simply send the amount of BTC you want to burn to 1ChancecoinXXXXXXXXXXXXXXXXXZELUFD. All inputs must come from the same address (this is the address to which CHA will be credited). As long as one of the outputs is 1ChancecoinXXXXXXXXXXXXXXXXXZELUFD, the burn will be recognized.
+To burn with a Bitcoin client, simply send the amount of BTC you want to burn to 1ChancecoinXXXXXXXXXXXXXXXXXZELUFD. As long as one of the outputs is 1ChancecoinXXXXXXXXXXXXXXXXXZELUFD, the burn will be credited to the first input address.
 
 ### Burning with Blockchain.info
 
@@ -48,13 +48,12 @@ To burn using a Blockchain.info wallet, do the following:
 
   1. Log in to your wallet.
   2. Click "Send Money."
-  3. Choose "Custom" under "Transaction Type."
-  4. Choose a single "From" address. This is the address to which CHA will be credited.
+  3. Choose "Quick Send" under "Transaction Type."
   5. Enter 1ChancecoinXXXXXXXXXXXXXXXXXZELUFD for the "To" address.
   6. Enter the amount of BTC you want to burn.
-  7. Use 0.0001 for the "Miner's Fee."
-  8. Choose any "Change Address" as needed.
-  9. Click "Review Payment" and then send the payment.
+  9. Click "Send Payment."
+
+Note that when you use multiple input addresses, the CHA is credited to the first input address.
 
 ## How do I gamble?
 
