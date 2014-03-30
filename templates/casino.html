@@ -8,10 +8,12 @@
 				<h1>Casino</h1>
 				{% if version_updated==False %}
 				<p class="warning">Chancecoin needs to be updated. Please go to <a href="http://chancecoin.com">Chancecoin.com</a> and update.</p>
-				{% elif updated==False %}
-				<p class="warning">Chancecoin is not finished synchronizing with the network.</p>
+				{% elif bitcoin_updated==False %}
+				<p class="warning">Bitcoind is not finished synchronizing. Bitcoind has finished processing {{ block_count_bitcoin }} Bitcoin blocks.</p>
+				{% elif db_updated==False %}
+				<p class="warning">Chancecoin is not finished synchronizing. Chancecoin has finished processing {{ block_count_db }} out of {{ block_count_bitcoin }} Bitcoin blocks.</p>
 				{% else %}
-				<p class="success">Chancecoin is up to date.</p>
+				<p class="success">Chancecoin is up to speed. Chancecoin has finished processing {{ block_count_db }} out of {{ block_count_bitcoin }} Bitcoin blocks.</p>
 				{% end %}
 				{% if info!=None %}
 				<p class="info">{% raw info %}</p>
@@ -50,6 +52,27 @@
 										</table>
 						  	</fieldset>
 						</form>
+				</div>
+		</div>
+
+		<div class="pure-g-r section padding-bottom">
+				<div class="pure-u-1">
+						<h2>Quick numbers</h2>
+						<table class="pure-table pure-table-bordered">
+								<thead>
+										<tr>
+												<th>Total CHA</th>
+												<th>Max profit</th>
+										</tr>
+								</thead>
+
+								<tbody>
+										<tr>
+												<td>{{ '{:,.6f}'.format(float(supply)) }} CHA</td>
+												<td>{{ '{:,.6f}'.format(float(max_profit)) }} CHA</td>
+										</tr>
+								</tbody>
+						</table>
 				</div>
 		</div>
 
@@ -124,26 +147,4 @@
 				{% end %}
 			</div>
 		</div>
-
-		<div class="pure-g-r section padding-bottom">
-				<div class="pure-u-1">
-						<h2>Quick numbers</h2>
-						<table class="pure-table pure-table-bordered">
-						    <thead>
-						        <tr>
-						            <th>Total CHA</th>
-						            <th>Max profit</th>
-						        </tr>
-						    </thead>
-
-						    <tbody>
-						        <tr>
-						            <td>{{ '{:,.6f}'.format(float(supply)) }} CHA</td>
-						            <td>{{ '{:,.6f}'.format(float(max_profit)) }} CHA</td>
-						        </tr>
-						    </tbody>
-						</table>
-				</div>
-		</div>
-
 {% end %}

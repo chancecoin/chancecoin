@@ -158,7 +158,7 @@ def match (db, tx):
                 elif tx1['give_asset'] == 'BTC':
                     fee = int(D(tx0['fee_required']) * D(backward_amount) / D(tx0_get_remaining))
                     if tx1_fee_remaining < fee: continue
-                    else: tx1_fee_remaining -= fee 
+                    else: tx1_fee_remaining -= fee
             else:   # Don’t deduct.
                 if tx1['get_asset'] == 'BTC':
                     if tx0_fee_remaining < tx1['fee_required']: continue
@@ -270,7 +270,7 @@ def expire (db, block_index):
     cursor.execute('''SELECT * FROM order_matches \
                       WHERE (validity = ? and match_expire_index < ?)''', ('pending', block_index))
     for order_match in cursor.fetchall():
-        
+
         # Update validity of order match.
         bindings = {
             'validity': 'invalid: expired awaiting payment',

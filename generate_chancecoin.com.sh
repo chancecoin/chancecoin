@@ -1,3 +1,4 @@
+python3.2 setup.py bdist_dmg
 cp templates/template.html templates/template_temp.html
 cp templates/template_chancecoin.com.html templates/template.html
 cp templates/wallet.html templates/wallet_temp.html
@@ -15,6 +16,7 @@ cp build/*.dmg chancecoin.com/static/downloads
 cp build/*.exe chancecoin.com/static/downloads
 wget -O chancecoin.com/index.html http://0.0.0.0:8080/
 wget -O chancecoin.com/participate.html http://0.0.0.0:8080/participate
+wget -O chancecoin.com/technical.html http://0.0.0.0:8080/technical
 wget -O chancecoin.com/freebies.html http://0.0.0.0:8080/freebies
 wget -O chancecoin.com/casino.html http://0.0.0.0:8080/casino
 wget -O chancecoin.com/wallet.html http://0.0.0.0:8080/wallet

@@ -31,8 +31,13 @@ class ServerThread(QtCore.QThread):
     def run(self):
         server.start()
 
+if getattr(sys, 'frozen', False):
+    file_frozen = sys.executable
+else:
+    file_frozen = __file__
+
 app = QApplication([])
-app.setWindowIcon(QtGui.QIcon('./static/images/favicon.ico'))
+app.setWindowIcon(QtGui.QIcon("./static/images/favicon.ico"))
 win = QWidget()
 win.resize(1200, 800)
 win.setWindowTitle('Chancecoin')
@@ -46,10 +51,10 @@ c = ChancecoinThread()
 c.start()
 
 view = QWebView()
-view.setUrl(QUrl("http://0.0.0.0:8080/"))
+view.setUrl(QUrl("http://127.0.0.1:8080/"))
 
 button = QtGui.QPushButton("Chancecoin Wallet")
-button.clicked.connect(lambda: view.setUrl(QUrl("http://0.0.0.0:8080/")))
+button.clicked.connect(lambda: view.setUrl(QUrl("http://127.0.0.1:8080/")))
 
 layout.addWidget(view)
 layout.addWidget(button)

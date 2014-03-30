@@ -42,6 +42,27 @@
     </div>
 
     <div class="pure-g-r section padding-bottom">
+        <div class="pure-u-1">
+            <h2>Quick numbers</h2>
+            <table class="pure-table pure-table-bordered">
+                <thead>
+                    <tr>
+                        <th>Total CHA</th>
+                        <th>Max profit</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>{{ '{:,.6f}'.format(float(supply)) }} CHA</td>
+                        <td>{{ '{:,.6f}'.format(float(max_profit)) }} CHA</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="pure-g-r section padding-bottom">
       <div class="pure-u-1">
         <h2>All bets</h2>
 
@@ -104,28 +125,4 @@
         {% end %}
       </div>
     </div>
-
-    <div class="pure-g-r section padding-bottom">
-        <div class="pure-u-1">
-            <h2>Quick numbers</h2>
-            <table class="pure-table pure-table-bordered">
-                <thead>
-                    <tr>
-                        <th>Total CHA</th>
-                        <th>Total CHA in bankroll</th>
-                        <th>Max profit</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr>
-                        <td>{{ '{:,.6f}'.format(float(supply)) }} CHA</td>
-                        <td>{{ '{:,.6f}'.format(float(bankroll)) }} CHA</td>
-                        <td>{{ '{:,.6f}'.format(float(max_profit)) }} CHA</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 {% end %}

@@ -401,8 +401,12 @@ def get_tx_info (tx):
         if len(addresses) != 1: return b'', None, None, None, None      # NOTE: Disallow multi‐sig inputs.
         source_list.append(addresses[0])
     # Require that all possible source addresses be the same.
-    if all(x == source_list[0] for x in source_list): source = source_list[0]
-    else: source = None
+    if all(x == source_list[0] for x in source_list):
+        source = source_list[0]
+    elif destination == config.UNSPENDABLE: #if this is a burn, take the source as the first address
+        source = source_list[0]
+    else:
+        source = None
 
     return source, destination, btc_amount, round(fee), data
 

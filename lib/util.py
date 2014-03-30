@@ -50,11 +50,8 @@ def log (db, command, category, bindings):
             logging.info('Bet: #{} set profit to {}'.format(bindings['tx_index'], output(bindings['profit'], 'CHA')))
         elif category == 'order_matches':
             logging.debug('Database: set validity of order_match {} to {}.'.format(bindings['order_match_id'], bindings['validity']))
-        # TODO: elif category == 'balances':
-            # logging.debug('Database: set balance of {} in {} to {}.'.format(bindings['address'], bindings['asset'], output(bindings['amount'], bindings['asset']).split(' ')[0]))
 
     elif command == 'insert':  # TODO
-
         if category == 'credits':
             logging.debug('Credit: {} to {} #{}# <{}>'.format(output(bindings['amount'], bindings['asset']), bindings['address'], bindings['calling_function'], bindings['event']))
 
@@ -250,6 +247,13 @@ def database_check (db):
         return
     print('Database not up to date.')
     raise exceptions.DatabaseError('Chancecoin database is behind Bitcoind. Is the chancecoind server running?')
+
+def get_status (db):
+    cursor = db.cursor()
+    block_count_db = last_block(db)['block_index']
+    cursor.close()
+    block_count_bitcoin = bitcoin.rpc('getblockcount', [])
+    return block_count_db, block_count_bitcoin
 
 def do_filter(results, filters, filterop):
     """Filters results based on a filter data structure (as used by the API)"""
