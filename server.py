@@ -16,6 +16,7 @@ from lib import (config, util, exceptions, bitcoin, blocks)
 from lib import (send, order, btcpay, bet, burn, cancel)
 
 db = None
+is_bitcoind_connected = True
 try:
     chancecoind.set_options()
     db = util.connect_to_db()
@@ -117,10 +118,13 @@ class TechnicalHandler(tornado.web.RequestHandler):
 
 class ErrorHandler(tornado.web.RequestHandler):
     def get(self):
+        global is_bitcoind_connected
         error = 'An unknown error has occurred.'
         info = None
         if config.HAS_CONFIG==False:
             error = 'You need to set up a Chancecoin config file at '+config.CONFIG_PATH+'. You can find an example config file <a href="https://raw2.github.com/chancecoin/chancecoin/master/example.conf">here</a>.'
+        if is_bitcoind_connected==False:
+            error = 'Cannot connect to Bitcoin. Please make sure you have bitcoind or Bitcoin-QT running and that your config file is set correctly at ' + config.CONFIG_PATH + '.'
         self.render("error.html", error = error, info = info)
 
 class ParticipateHandler(tornado.web.RequestHandler):
@@ -307,7 +311,9 @@ class WalletHandler(tornado.web.RequestHandler):
 
 class Application(tornado.web.Application):
     def __init__(self):
-        if db==None:
+        global is_bitcoind_connected
+        is_bitcoind_connected = util.is_bitcoind_connected()
+        if db==None or is_bitcoind_connected == False:
             handlers = [
                 (r"/", ErrorHandler),
                 (r"/wallet", ErrorHandler),

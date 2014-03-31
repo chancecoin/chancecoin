@@ -26,6 +26,9 @@ import appdirs
 import logging
 import configparser
 
+import shutil
+#import filecmp
+
 # Units
 from lib import (config, util, exceptions, bitcoin, blocks)
 from lib import (send, order, btcpay, bet, burn, cancel)
@@ -42,12 +45,18 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
     if unittest and not testnet:
         raise Exception # TODO
 
-    # Data directory
+     # Data directory
     if not data_dir:
         config.DATA_DIR = appdirs.user_data_dir(appauthor=config.APPAUTHOR, appname=config.APPNAME, roaming=True)
     else:
         config.DATA_DIR = data_dir
-    if not os.path.isdir(config.DATA_DIR): os.mkdir(config.DATA_DIR)
+    
+    if not os.path.isdir(config.DATA_DIR):
+        if not os.path.isdir(os.path.dirname(config.DATA_DIR)):
+            if not os.path.isdir(os.path.dirname(os.path.dirname(config.DATA_DIR))):
+                os.mkdir(os.path.dirname(os.path.dirname(config.DATA_DIR)))
+            os.mkdir(os.path.dirname(config.DATA_DIR))
+        os.mkdir(config.DATA_DIR)
 
     # Configuration file
     configfile = configparser.ConfigParser()
@@ -55,6 +64,15 @@ def set_options (data_dir=None, bitcoind_rpc_connect=None, bitcoind_rpc_port=Non
     configfile.read(config_path)
     has_config = 'Default' in configfile
     print("Config file: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
+    #if they don't have the config, insert a default one
+    if not has_config:
+        shutil.copy('chancecoin.conf', config_path)
+        configfile = configparser.ConfigParser()
+        config_path = os.path.join(config.DATA_DIR, config.CONFIG_FILENAME)
+        configfile.read(config_path)
+        has_config = 'Default' in configfile
+    #config.USING_DEFAULT_CONFIG = filecmp.cmp('chancecoin.conf', config_path)
+    #print(config.USING_DEFAULT_CONFIG)
     config.CONFIG_PATH = config_path
     config.HAS_CONFIG = has_config
 

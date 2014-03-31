@@ -229,6 +229,25 @@ def versions_check (db):
     logging.debug('Status: Version checks passed.')
     return
 
+def is_bitcoind_connected():
+    try:
+        print('inside function')
+        
+        request_session = requests.Session()
+        headers = {'content-type': 'application/json'}
+        payload = {
+            "method": 'getblockcount',
+            "params": [],
+            "jsonrpc": "2.0",
+            "id": 0,
+        }
+        response = request_session.post(config.BITCOIND_RPC, data=json.dumps(payload), headers=headers)
+        print('True')
+        return True
+    except requests.exceptions.ConnectionError:
+        print('False')
+        return False    
+    
 def bitcoind_check (db):
     """Checks blocktime of last block to see if Bitcoind is running behind."""
     block_count = bitcoin.rpc('getblockcount', [])
