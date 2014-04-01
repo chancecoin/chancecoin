@@ -368,6 +368,115 @@ def transaction (source, destination, btc_amount, fee, data, unittest=False, mul
     unsigned_tx_hex = binascii.hexlify(transaction).decode('utf-8')
     return unsigned_tx_hex
 
+def serialise_multioutput (inputs, outputs, change_output=None, source=None, unsigned=False):
+    s  = (1).to_bytes(4, byteorder='little')                # Version
+
+    # Number of inputs.
+    s += var_int(int(len(inputs)))
+
+    # List of Inputs.
+    for i in range(len(inputs)):
+        txin = inputs[i]
+        s += binascii.unhexlify(bytes(txin['txid'], 'utf-8'))[::-1]         # TxOutHash
+        s += txin['vout'].to_bytes(4, byteorder='little')   # TxOutIndex
+
+        if not unsigned:
+            # No signature.
+            script = b''
+        else:
+            #pubkeyhash = base58_decode(source, config.ADDRESSVERSION)
+            #script = OP_DUP                                     # OP_DUP
+            #script += OP_HASH160                                # OP_HASH160
+            #script += op_push(20)                               # Push 0x14 bytes
+            #script += pubkeyhash                                # pubKeyHash
+            #script += OP_EQUALVERIFY                            # OP_EQUALVERIFY
+            #script += OP_CHECKSIG                               # OP_CHECKSIG
+            script = str.encode(txin['scriptPubKey'])
+
+        s += var_int(int(len(script)))                      # Script length
+        s += script                                         # Script
+        s += b'\xff' * 4                                    # Sequence
+
+    # Number of outputs.
+    n = len(outputs)
+    if change_output: n += 1
+    s += var_int(n)
+
+    # Destination output.
+    for output in outputs:
+        address, value = output
+        pubkeyhash = base58_decode(address, config.ADDRESSVERSION)
+        s += value.to_bytes(8, byteorder='little')          # Value
+        script = OP_DUP                                     # OP_DUP
+        script += OP_HASH160                                # OP_HASH160
+        script += op_push(20)                               # Push 0x14 bytes
+        script += pubkeyhash                                # pubKeyHash
+        script += OP_EQUALVERIFY                            # OP_EQUALVERIFY
+        script += OP_CHECKSIG                               # OP_CHECKSIG
+        s += var_int(int(len(script)))                      # Script length
+        s += script
+
+    # Change output.
+    if change_output:
+        address, value = change_output
+        pubkeyhash = base58_decode(address, config.ADDRESSVERSION)
+        s += value.to_bytes(8, byteorder='little')          # Value
+        script = OP_DUP                                     # OP_DUP
+        script += OP_HASH160                                # OP_HASH160
+        script += op_push(20)                               # Push 0x14 bytes
+        script += pubkeyhash                                # pubKeyHash
+        script += OP_EQUALVERIFY                            # OP_EQUALVERIFY
+        script += OP_CHECKSIG                               # OP_CHECKSIG
+        s += var_int(int(len(script)))                      # Script length
+        s += script
+
+    s += (0).to_bytes(4, byteorder='little')                # LockTime
+    return s
+
+# Replace unittest flag with fake bitcoind JSON-RPC server.
+# destination_btc_amounts is a list of (addr,btc_amount) tuples
+def transaction_multioutput (source, destination_btc_amounts, fee, unittest=False, unsigned=False):
+    if config.PREFIX == config.UNITTEST_PREFIX: unittest = True
+
+    # Validate addresses.
+    for address in [x[0] for x in destination_btc_amounts]+[source]:
+        if address:
+            try:
+                base58_decode(address, config.ADDRESSVERSION)
+            except Exception:   # TODO
+                raise exceptions.InvalidAddressError('Invalid Bitcoin address:',
+                                          address)
+
+    # Check that the source is in wallet.
+    if not unittest and not unsigned:
+        if not rpc('validateaddress', [source])['ismine']:
+            raise exceptions.InvalidAddressError('Not one of your Bitcoin addresses:', source)
+
+    # Check that the destination output isn't a dust output.
+    for btc_amount in [x[1] for x in destination_btc_amounts]:
+        if not btc_amount >= config.DUST_SIZE:
+            pass
+            #raise exceptions.TransactionError('Destination output is below the dust target value.')
+
+    # Calculate total BTC to be sent.
+    total_btc_out = fee+sum([x[1] for x in destination_btc_amounts])
+
+    # Construct inputs.
+    inputs, total_btc_in = get_inputs(source, total_btc_out, unittest=unittest, unsigned=unsigned)
+    if not inputs:
+        raise exceptions.BalanceError('Insufficient bitcoins at address {}. (Need {} BTC.)'.format(source, total_btc_out / config.UNIT))
+
+    # Construct outputs.
+    outputs = destination_btc_amounts
+    change_amount = total_btc_in - total_btc_out    # No check to make sure that the change output is above the dust target_value.
+    if change_amount: change_output = (source, change_amount)
+    else: change_output = None
+
+    # Serialise inputs and outputs.
+    transaction = serialise_multioutput(inputs, outputs, change_output, source=source, unsigned=unsigned)
+    unsigned_tx_hex = binascii.hexlify(transaction).decode('utf-8')
+    return unsigned_tx_hex
+
 def transmit (unsigned_tx_hex, ask=True, unsigned=False):
     # Confirm transaction.
     if not unsigned:

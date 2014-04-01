@@ -15,7 +15,7 @@ cp -r static chancecoin.com/
 cp .htaccess chancecoin.com/
 mkdir chancecoin.com/static/downloads
 cp build/*.dmg chancecoin.com/static/downloads
-cp build/*.exe chancecoin.com/static/downloads
+cp build/*.zip chancecoin.com/static/downloads
 wget -O chancecoin.com/index.html http://0.0.0.0:8080/
 wget -O chancecoin.com/participate.html http://0.0.0.0:8080/participate
 wget -O chancecoin.com/technical.html http://0.0.0.0:8080/technical
