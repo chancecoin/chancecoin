@@ -232,7 +232,7 @@ def versions_check (db):
 def is_bitcoind_connected():
     try:
         print('inside function')
-        
+
         request_session = requests.Session()
         headers = {'content-type': 'application/json'}
         payload = {
@@ -246,8 +246,8 @@ def is_bitcoind_connected():
         return True
     except requests.exceptions.ConnectionError:
         print('False')
-        return False    
-    
+        return False
+
 def bitcoind_check (db):
     """Checks blocktime of last block to see if Bitcoind is running behind."""
     block_count = bitcoin.rpc('getblockcount', [])
