@@ -30,6 +30,16 @@ def bet_tuples(bets):
             bets_new.append((bet['source'],util.devise(db, bet['bet'], 'CHA', 'output'),bet['chance'],bet['payout'],util.devise(db, bet['profit'], 'CHA', 'output')))
     return bets_new
 
+def balance_tuples(balances):
+    balances_new = []
+    if balances!=None:
+        cha_supply = util.cha_supply(db)
+        for balance in balances:
+            burns = util.get_burns(db, source = balance['address'], validity='valid')
+            burned = sum([burn['burned'] for burn in burns])
+            balances_new.append((balance['address'],util.devise(db, balance['amount'], 'CHA', 'output'),util.devise(db, burned, 'BTC', 'output'), balance['amount']/cha_supply*100))
+    return balances_new
+
 def order_tuples(orders):
     orders_new = []
     if orders!=None:
@@ -139,6 +149,20 @@ class ParticipateHandler(tornado.web.RequestHandler):
         multiplier_initial = config.MULTIPLIER_INITIAL
         version = config.CLIENT_VERSION
         self.render("participate.html", max_profit = max_profit, house_edge = house_edge, burn_start = burn_start, burn_end = burn_end, unspendable = unspendable, max_burn = max_burn, multiplier = multiplier, multiplier_initial = multiplier_initial, version = version)
+
+class BalancesHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
+    def get(self):
+        db_updated = yield tornado.gen.Task(is_db_updated)
+        bitcoin_updated = yield tornado.gen.Task(is_bitcoin_updated)
+        version_updated = yield tornado.gen.Task(is_version_updated)
+        block_count_db, block_count_bitcoin = yield tornado.gen.Task(get_status)
+        info = None
+        error = None
+        balances = util.get_balances(db, asset = 'CHA', order_by = 'amount', order_dir='desc')
+        balances = balance_tuples(balances)
+        self.render("balances.html", db_updated = db_updated, bitcoin_updated = bitcoin_updated, version_updated = version_updated, balances = balances, info = info, error = error, block_count_db = block_count_db, block_count_bitcoin = block_count_bitcoin)
 
 class CasinoHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
@@ -318,6 +342,7 @@ class Application(tornado.web.Application):
                 (r"/", ErrorHandler),
                 (r"/wallet", ErrorHandler),
                 (r"/casino", ErrorHandler),
+                (r"/balances", ErrorHandler),
                 (r"/participate", ErrorHandler),
                 (r"/technical", ErrorHandler),
                 (r"/freebies", ErrorHandler),
@@ -327,6 +352,7 @@ class Application(tornado.web.Application):
                 (r"/", HomeHandler),
                 (r"/wallet", WalletHandler),
                 (r"/casino", CasinoHandler),
+                (r"/balances", BalancesHandler),
                 (r"/participate", ParticipateHandler),
                 (r"/technical", TechnicalHandler),
                 (r"/freebies", FreebiesHandler),

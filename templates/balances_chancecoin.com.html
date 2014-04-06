@@ -1,0 +1,41 @@
+{% extends "template.html" %}
+
+{% block title %}Balances{% end %}
+
+{% block content %}
+    <div class="pure-g-r section">
+      <div class="pure-u-1">
+        <h1>Balances</h1>
+      </div>
+    </div>
+
+    <div class="pure-g-r section padding-bottom">
+      <div class="pure-u-1">
+        <h2>All balances</h2>
+
+        <p>This information is up to date as of {{ datetime.datetime.now().strftime('%Y-%m-%d %H:%M') }}.</p>
+
+        <table class="pure-table pure-table-bordered">
+            <thead>
+                <tr>
+                    <th>Address</th>
+                    <th>BTC burned</th>
+                    <th>CHA balance</th>
+                    <th>Market share</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for balance in balances %}
+                <tr>
+                    <td>{{ balance[0] }}</td>
+                    <td>{{ balance[2] }}</td>
+                    <td>{{ balance[1] }}</td>
+                    <td>{{ '{:,.2f}'.format(float(balance[3])) }}%</td>
+                </tr>
+                {% end %}
+            </tbody>
+        </table>
+      </div>
+    </div>
+{% end %}
