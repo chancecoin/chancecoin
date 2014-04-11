@@ -122,7 +122,6 @@ def resolve(db):
     local_zone = tz.tzlocal()
     ny_zone = tz.gettz('America/New_York')
     for bet in bets:
-
         block = util.get_block(db, bet['block_index'])
         block_time = datetime.fromtimestamp(int(block['block_time'])).replace(tzinfo=local_zone)
         block_time_utc = block_time.astimezone(utc_zone)
@@ -146,9 +145,10 @@ def resolve(db):
                 for number in numbers:
                     n += combinations(number-1,i)
                     i += 1
-                roll1 = n/(N-1)*100
+                roll1 = n/(N-1)
                 roll2 = (int(bet['tx_hash'][10:],16) % 1000000000)/1000000000.0
-                roll = (roll1 + roll2) % 2
+                roll = (roll1 + roll2) % 1
+                roll = roll * 100.0
                 chance, payout, bet_amount, cha_supply = bet['chance'], bet['payout'], bet['bet'], bet['cha_supply']
                 if roll<chance:
                     # the bet is a winner

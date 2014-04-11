@@ -55,7 +55,7 @@ def parse (db, tx, message=None):
     if validity == 'valid':
         # Calculate quantity of XPC earned. (Maximum 1 BTC in total, ever.)
         burns = util.get_burns(db, validity='valid')
-        already_burned = sum([burn['burned'] for burn in burns])
+        already_burned = sum([burn['earned'] for burn in burns])
         max_burn = config.MAX_BURN*config.UNIT - already_burned
         if sent > max_burn: burned = max_burn   # Exceeded maximum burn; earn what you can.
         else: burned = sent
