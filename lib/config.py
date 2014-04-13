@@ -6,10 +6,10 @@ UNIT = 100000000        # The same across currencies.
 
 # Versions
 CLIENT_VERSION_MAJOR = 1
-CLIENT_VERSION_MINOR = 2
+CLIENT_VERSION_MINOR = 3
 CLIENT_VERSION = float(str(CLIENT_VERSION_MAJOR) + '.' + str(CLIENT_VERSION_MINOR))
 DB_VERSION_MAJOR = 1        # Major version changes the blocks or transactions table.
-DB_VERSION_MINOR = 2        # Minor version changes just the parsing.
+DB_VERSION_MINOR = 3        # Minor version changes just the parsing.
 DB_VERSION = float(str(DB_VERSION_MAJOR) + '.' + str(DB_VERSION_MINOR))
 
 # Ports

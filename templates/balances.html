@@ -6,14 +6,27 @@
     <div class="pure-g-r section">
       <div class="pure-u-1">
         <h1>Balances</h1>
+        {% if version_updated==False %}
+        <p class="warning">Chancecoin needs to be updated. Please go to <a href="http://chancecoin.com">Chancecoin.com</a> and update.</p>
+        {% elif bitcoin_updated==False %}
+        <p class="warning">Bitcoind is not finished synchronizing. Bitcoind has finished processing {{ block_count_bitcoin }} Bitcoin blocks.</p>
+        {% elif db_updated==False %}
+        <p class="warning">Chancecoin is not finished synchronizing. Chancecoin has finished processing {{ block_count_db }} out of {{ block_count_bitcoin }} Bitcoin blocks.</p>
+        {% else %}
+        <p class="success">Chancecoin is up to speed. Chancecoin has finished processing {{ block_count_db }} out of {{ block_count_bitcoin }} Bitcoin blocks.</p>
+        {% end %}
+        {% if info!=None %}
+        <p class="info">{% raw info %}</p>
+        {% end %}
+        {% if error!=None %}
+        <p class="error">{% raw error %}</p>
+        {% end %}
       </div>
     </div>
 
     <div class="pure-g-r section padding-bottom">
       <div class="pure-u-1">
         <h2>All balances</h2>
-
-        <p>This information is up to date as of {{ datetime.datetime.now().strftime('%Y-%m-%d %H:%M') }}.</p>
 
         <table class="pure-table pure-table-bordered">
             <thead>

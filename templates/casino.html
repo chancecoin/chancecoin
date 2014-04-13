@@ -3,126 +3,148 @@
 {% block title %}Casino{% end %}
 
 {% block content %}
-    <div class="pure-g-r section">
-      <div class="pure-u-1">
-        <h1>Casino</h1>
-        <p class="warning">The forms on this page don't actually work, and the static information may be out of date. This page is designed to give you a preview of what the Chancecoin wallet software looks like. Download the Chancecoin wallet today. Download links and installation instructions are available <a href="/participate">here</a>.</p>
-      </div>
-    </div>
+		<div class="pure-g-r section">
+			<div class="pure-u-1">
+				<h1>Casino</h1>
+				{% if version_updated==False %}
+				<p class="warning">Chancecoin needs to be updated. Please go to <a href="http://chancecoin.com">Chancecoin.com</a> and update.</p>
+				{% elif bitcoin_updated==False %}
+				<p class="warning">Bitcoind is not finished synchronizing. Bitcoind has finished processing {{ block_count_bitcoin }} Bitcoin blocks.</p>
+				{% elif db_updated==False %}
+				<p class="warning">Chancecoin is not finished synchronizing. Chancecoin has finished processing {{ block_count_db }} out of {{ block_count_bitcoin }} Bitcoin blocks.</p>
+				{% else %}
+				<p class="success">Chancecoin is up to speed. Chancecoin has finished processing {{ block_count_db }} out of {{ block_count_bitcoin }} Bitcoin blocks.</p>
+				{% end %}
+				{% if info!=None %}
+				<p class="info">{% raw info %}</p>
+				{% end %}
+				{% if error!=None %}
+				<p class="error">{% raw error %}</p>
+				{% end %}
+			</div>
+		</div>
 
-    <div class="pure-g-r section">
-        <div class="pure-u-1">
-            <h2>Roll the dice</h2>
-            <form class="pure-form pure-form-stacked" action="/casino" method="post">
-                <input type="hidden" name="form" value="roll">
-                <fieldset>
-                    <table class="pure-table pure-table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Source address</th>
-                                <th>Bet size (in CHA)</th>
-                                <th>Chance to win (%)</th>
-                                <th>Payout multiplier</th>
-                                <th>Roll</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><input type="text" placeholder="source address" name="source"></td>
-                                <td><input type="text" placeholder="bet size" name="bet"></td>
-                                <td><input type="text" placeholder="chance to win" name="chance" value="50" onchange="document.getElementsByName('payout')[0].value=100/document.getElementsByName('chance')[0].value*({{1-house_edge}});"></td>
-                                <td><input type="text" placeholder="payout" name="payout" value="1.96" onchange="document.getElementsByName('chance')[0].value=100/(document.getElementsByName('payout')[0].value/({{1-house_edge}}));"></td>
-                                <td><button type="submit" class="pure-button pure-button-primary" name="roll" value="high">Roll the dice</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </fieldset>
-            </form>
-        </div>
-    </div>
+		<div class="pure-g-r section">
+				<div class="pure-u-1">
+						<h2>Roll the dice</h2>
+						<form class="pure-form pure-form-stacked" action="/casino" method="post">
+								<input type="hidden" name="form" value="roll">
+						  	<fieldset>
+										<table class="pure-table pure-table-bordered">
+												<thead>
+														<tr>
+																<th>Source address</th>
+																<th>Bet size (in CHA)</th>
+																<th>Chance to win (%)</th>
+																<th>Payout multiplier</th>
+																<th>Roll</th>
+														</tr>
+												</thead>
+												<tbody>
+														<tr>
+																<td><input type="text" placeholder="source address" name="source"></td>
+																<td><input type="text" placeholder="bet size" name="bet"></td>
+																<td><input type="text" placeholder="chance to win" name="chance" value="50" onchange="document.getElementsByName('payout')[0].value=100/document.getElementsByName('chance')[0].value*({{1-house_edge}});"></td>
+																<td><input type="text" placeholder="payout" name="payout" value="1.96" onchange="document.getElementsByName('chance')[0].value=100/(document.getElementsByName('payout')[0].value/({{1-house_edge}}));"></td>
+																<td><button type="submit" class="pure-button pure-button-primary" name="roll" value="high">Roll the dice</button></td>
+														</tr>
+												</tbody>
+										</table>
+						  	</fieldset>
+						</form>
+				</div>
+		</div>
 
-    <div class="pure-g-r section padding-bottom">
-        <div class="pure-u-1">
-            <h2>Quick numbers</h2>
-            <table class="pure-table pure-table-bordered">
-                <thead>
-                    <tr>
-                        <th>Total CHA</th>
-                        <th>Max profit</th>
-                    </tr>
-                </thead>
+		<div class="pure-g-r section padding-bottom">
+				<div class="pure-u-1">
+						<h2>Quick numbers</h2>
+						<table class="pure-table pure-table-bordered">
+								<thead>
+										<tr>
+												<th>Total CHA</th>
+												<th>Max profit</th>
+										</tr>
+								</thead>
 
-                <tbody>
-                    <tr>
-                        <td>{{ '{:,.6f}'.format(float(supply)) }} CHA</td>
-                        <td>{{ '{:,.6f}'.format(float(max_profit)) }} CHA</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+								<tbody>
+										<tr>
+												<td>{{ '{:,.6f}'.format(float(supply)) }} CHA</td>
+												<td>{{ '{:,.6f}'.format(float(max_profit)) }} CHA</td>
+										</tr>
+								</tbody>
+						</table>
+				</div>
+		</div>
 
-    <div class="pure-g-r section padding-bottom">
-      <div class="pure-u-1">
-        <h2>All bets</h2>
+		<div class="pure-g-r section padding-bottom">
+			<div class="pure-u-1">
+				<h2>All bets</h2>
 
-        <table class="pure-table pure-table-bordered">
-            <thead>
-                <tr>
-                    <th>Source address</th>
-                    <th>Bet size (in CHA)</th>
-                    <th>Chance to win (%)</th>
-                    <th>Payout multiplier</th>
-                    <th>Profit</th>
-                </tr>
-            </thead>
+				<table class="pure-table pure-table-bordered">
+				    <thead>
+				        <tr>
+				            <th>Source address</th>
+				            <th>Bet size (in CHA)</th>
+				            <th>Chance to win (%)</th>
+				            <th>Payout multiplier</th>
+				            <th>Profit</th>
+				        </tr>
+				    </thead>
 
-            <tbody>
-                {% for bet in bets %}
-                <tr>
-                    <td>{{ bet[0] }}</td>
-                    <td>{{ bet[1] }}</td>
-                    <td>{{ bet[2] }}</td>
-                    <td>{{ bet[3] }}</td>
-                    <td>{{ bet[4] }}</td>
-                </tr>
-                {% end %}
-            </tbody>
-        </table>
-        <h2>My bets</h2>
-        <form class="pure-form" action="/casino" method="post">
-            <fieldset>
-                <input type="hidden" name="form" value="my_bets">
+				    <tbody>
+				    		{% for bet in bets %}
+				        <tr>
+										<td>{{ bet[0] }}</td>
+										<td>{{ bet[1] }}</td>
+										<td>{{ bet[2] }}</td>
+										<td>{{ bet[3] }}</td>
+										{% if bet[4]==0 %}
+										<td>Unresolved</td>
+										{% else %}
+										<td>{{ bet[4] }}</td>
+										{% end %}
+				        </tr>
+				        {% end %}
+				    </tbody>
+				</table>
+				<h2>My bets</h2>
+				<form class="pure-form" action="/casino" method="post">
+						<fieldset>
+								<input type="hidden" name="form" value="my_bets">
 
-                <input type="text" placeholder="address" name="address">
-                <button type="submit" class="pure-button pure-button-primary">Get my bets</button>
-            </fieldset>
-        </form>
-        {% if my_bets!=None %}
-        <table class="pure-table pure-table-bordered">
-            <thead>
-                <tr>
-                    <th>Source address</th>
-                    <th>Bet size (in CHA)</th>
-                    <th>Chance to win (%)</th>
-                    <th>Payout multiplier</th>
-                    <th>Profit</th>
-                </tr>
-            </thead>
+								<input type="text" placeholder="address" name="address">
+								<button type="submit" class="pure-button pure-button-primary">Get my bets</button>
+						</fieldset>
+				</form>
+				{% if my_bets!=None %}
+				<table class="pure-table pure-table-bordered">
+						<thead>
+								<tr>
+										<th>Source address</th>
+										<th>Bet size (in CHA)</th>
+										<th>Chance to win (%)</th>
+										<th>Payout multiplier</th>
+										<th>Profit</th>
+								</tr>
+						</thead>
 
-            <tbody>
-                {% for bet in my_bets %}
-                <tr>
-                    <td>{{ bet[0] }}</td>
-                    <td>{{ bet[1] }}</td>
-                    <td>{{ bet[2] }}</td>
-                    <td>{{ bet[3] }}</td>
-                    <td>{{ bet[4] }}</td>
-                </tr>
-                {% end %}
-            </tbody>
-        </table>
-        {% end %}
-      </div>
-    </div>
+						<tbody>
+								{% for bet in my_bets %}
+								<tr>
+										<td>{{ bet[0] }}</td>
+										<td>{{ bet[1] }}</td>
+										<td>{{ bet[2] }}</td>
+										<td>{{ bet[3] }}</td>
+										{% if bet[4]==0 %}
+										<td>Unresolved</td>
+										{% else %}
+										<td>{{ bet[4] }}</td>
+										{% end %}
+								</tr>
+								{% end %}
+						</tbody>
+				</table>
+				{% end %}
+			</div>
+		</div>
 {% end %}

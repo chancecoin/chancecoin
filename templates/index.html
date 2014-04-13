@@ -3,85 +3,47 @@
 {% block title %}Home{% end %}
 
 {% block splash %}
-    <div class="splash">
-      <div class="pure-g-r">
-        <div class="pure-u-1">
-          <div class="splash-image">
-            <img src="/static/images/logo.png" alt="ChanceCoin logo" style="width: 150px;">
-          </div>
-          <div class="splash-text">
-            <h1 class="splash-head">
-            Decentralized dice betting
-            </h1>
-            <h2 class="splash-subhead">
-            Chancecoin is a coin and a casino. Use it to bet on dice rolls, or bankroll the house.
-            </h2>
-          </div>
-        </div>
-      </div>
-    </div>
+		<div class="splash">
+			<div class="pure-g-r">
+				<div class="pure-u-1">
+					<div class="splash-image">
+						<img src="/static/images/logo.png" alt="ChanceCoin logo" style="width: 150px;" />
+					</div>
+					<div class="splash-text">
+						<h1 class="splash-head">
+						Decentralized dice betting
+						</h1>
+						<h2 class="splash-subhead">
+						Chancecoin is a coin and a casino. Use it to bet on dice rolls, or bankroll the house.
+						</h2>
+					</div>
+				</div>
+			</div>
+		</div>
 
 {% end %}
 
 {% block content %}
-    <div class="pure-g-r section">
-      <div class="pure-u-1-3 segment one-third">
-        <h2><img src="/static/images/dice_32x32.png" alt="" class="inline" /> Made for dice betting</h2>
-        <p>Chancecoin is specifically designed for betting on dice rolls. Pick your odds and make your bet. Or invest in the house bankroll.</p>
-      </div>
-      <div class="pure-u-1-3 segment one-third">
-        <h2><img src="/static/images/fullscreen_exit_32x32.png" alt="" class="inline" /> Decentralized</h2>
-        <p>Built on top of the Bitcoin network, Chancecoin is fully decentralized. There is no need for a central casino as a point of failure.</p>
-      </div>
-      <div class="pure-u-1-3 segment one-third">
-        <h2><img src="/static/images/aperture_alt_32x32.png" alt="" class="inline" /> Fair and open</h2>
-        <p>Chancecoins are created during a proof-of-burn time period that is open to everyone. The code itself is open source and published on GitHub.</p>
-      </div>
-    </div>
+		<div class="pure-g-r section">
+			<div class="pure-u-1-3 segment one-third">
+				<h2><img src="/static/images/dice_32x32.png" alt="" class="inline" /> Made for dice betting</h2>
+				<p>Chancecoin is specifically designed for betting on dice rolls. Pick your odds and make your bet. Or invest in the house bankroll.</p>
+			</div>
+			<div class="pure-u-1-3 segment one-third">
+				<h2><img src="/static/images/fullscreen_exit_32x32.png" alt="" class="inline" /> Decentralized</h2>
+				<p>Built on top of the Bitcoin network, Chancecoin is fully decentralized. There is no need for a central casino as a point of failure.</p>
+			</div>
+			<div class="pure-u-1-3 segment one-third">
+				<h2><img src="/static/images/aperture_alt_32x32.png" alt="" class="inline" /> Fair and open</h2>
+				<p>Chancecoins are created during a proof-of-burn time period that is open to everyone. The code itself is open source and published on GitHub.</p>
+			</div>
+		</div>
 
-    <div class="pure-g-r section">
-      <div class="pure-u-1 segment">
-        <p>What are you waiting for? <a href="/participate">Roll the dice</a> on Chancecoin today.</p>
-      </div>
-    </div>
+		<div class="pure-g-r section">
+			<div class="pure-u-1 segment">
+				<p>What are you waiting for? <a href="/participate">Roll the dice</a> on Chancecoin today.</p>
+			</div>
+		</div>
 
-    <div class="pure-g-r section">
-      <div class="pure-u-1-2 segment one-half">
-          <h2>BTC burned to date</h2>
-          <script type="text/javascript">
-            google.load("visualization", "1", {packages:["corechart"]});
-            google.setOnLoadCallback(drawChart);
-            function drawChart() {
-                var data = $.ajax({
-                    url: "http://chancecoin.com/blockchain_balance.php",
-                    dataType: "text/html",
-                    async: false
-                }).responseText;
-                var dataArray = new Array();
-                var datas = data.split(";");
-                dataArray.push(['Time','BTC burned']);
-                for (var i=0; i<datas.length; i++) {
-                    var xy = datas[i].split(",");
-                    var date = new Date(xy[0]*1000);
-                    if (xy[0]*1>1395792000 && xy[0]*1<1399420800){
-                        dataArray.push(new Array(date, parseFloat(xy[1],6)));
-                    }
-                }
-                var data = google.visualization.arrayToDataTable(dataArray);
-                var options = {
-                };
-
-                var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-                chart.draw(data, options);
-              }
-          </script>
-          <div id="chart_div" style="width: 100%; height: 300px;"></div>
-          <p>{{ supply }} CHA <br /> as of {{ datetime.datetime.now().strftime('%Y-%m-%d %H:%M') }}</p>
-      </div>
-      <div class="pure-u-1-2 segment one-half">
-        <h2>Functioning wallet software</h2>
-        <p><a href="/participate"><img src="/static/images/wallet_screenshot.png" alt="Wallet screenshot" /></a></p>
-        <p>Installation instructions are available on the <a href="/participate">Participate</a> page.</p>
-      </div>
 </div>
 {% end %}
