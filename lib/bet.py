@@ -10,6 +10,7 @@ import re
 import json
 import urllib3
 import math
+import datetime
 from datetime import *
 from dateutil import *
 from dateutil.tz import *
@@ -128,7 +129,7 @@ def resolve(db):
         block_time_ny = block_time.astimezone(ny_zone)
 
         if block_time_ny.hour>=23 and block_time_ny.minute>=56:
-            search_data = block_time_ny.timedelta(days=1).strftime('%d/%m/%Y')
+            search_data = (block_time_ny+timedelta(days=1)).strftime('%d/%m/%Y')
         else:
             search_date = block_time_ny.strftime('%d/%m/%Y')
         http = urllib3.PoolManager()
