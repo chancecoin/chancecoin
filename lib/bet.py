@@ -35,7 +35,7 @@ def validate (db, source, bet, chance, payout):
     if chance<0 or chance>100:
         problems.append('chance must be between 0 and 100')
 
-    if payout<1:
+    if payout<=1:
         problems.append('payout must be greater than 1')
 
     if (payout-1)*bet > config.MAX_PROFIT*util.cha_supply(db):
@@ -129,7 +129,7 @@ def resolve(db):
         block_time_ny = block_time.astimezone(ny_zone)
 
         if block_time_ny.hour>=23 and block_time_ny.minute>=56:
-            search_data = (block_time_ny+timedelta(days=1)).strftime('%d/%m/%Y')
+            search_date = (block_time_ny+timedelta(days=1)).strftime('%d/%m/%Y')
         else:
             search_date = block_time_ny.strftime('%d/%m/%Y')
         http = urllib3.PoolManager()

@@ -574,6 +574,8 @@ def follow (db):
 
                 # Parse the transactions in the block.
                 parse_block(db, block_index, block_time)
+                # resolve unresolved bets
+                bet.resolve(db)
 
             # Increment block index.
             block_count = bitcoin.rpc('getblockcount', [])
