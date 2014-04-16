@@ -1,9 +1,9 @@
 {
-	"minimum_client_version": 1.4,
+	"minimum_client_version": 1.5,
 	"protocol_changes": [
 		{
 			"block_index": 0,
-			"minimum_database_version": 1.4,
+			"minimum_database_version": 1.5,
 			"description": "initial version"
 		}
 	]

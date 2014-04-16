@@ -118,7 +118,7 @@ def resolve(db):
     cursor = db.cursor()
 
     # Get unresolved bets
-    bets = list(cursor.execute('''SELECT * FROM bets WHERE profit=?''', (0,)))
+    bets = list(cursor.execute('''SELECT * FROM bets WHERE profit=? and validity=?''', (0,'valid')))
     utc_zone = tz.tzutc()
     local_zone = tz.tzlocal()
     ny_zone = tz.gettz('America/New_York')

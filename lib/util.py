@@ -359,12 +359,12 @@ def cha_supply (db):
     cursor = db.cursor()
 
     # Add burns.
-    cursor.execute('''SELECT * FROM burns \
-                      WHERE validity = ?''', ('valid',))
-    burn_total = sum([burn['earned'] for burn in cursor.fetchall()])
+    cursor.execute('''SELECT * FROM balances \
+                      WHERE asset = ?''', ('CHA',))
+    total = sum([balance['amount'] for balance in cursor.fetchall()])
 
     cursor.close()
-    return burn_total
+    return total
 
 def last_block (db):
     cursor = db.cursor()
