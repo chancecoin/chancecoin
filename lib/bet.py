@@ -122,52 +122,54 @@ def resolve(db):
     utc_zone = tz.tzutc()
     local_zone = tz.tzlocal()
     ny_zone = tz.gettz('America/New_York')
-    for bet in bets:
-        block = util.get_block(db, bet['block_index'])
-        block_time = datetime.fromtimestamp(int(block['block_time'])).replace(tzinfo=local_zone)
-        block_time_utc = block_time.astimezone(utc_zone)
-        block_time_ny = block_time.astimezone(ny_zone)
+    try:
+        for bet in bets:
+            block = util.get_block(db, bet['block_index'])
+            block_time = datetime.fromtimestamp(int(block['block_time'])).replace(tzinfo=local_zone)
+            block_time_utc = block_time.astimezone(utc_zone)
+            block_time_ny = block_time.astimezone(ny_zone)
 
-        if block_time_ny.hour>=23 and block_time_ny.minute>=56:
-            search_date = (block_time_ny+timedelta(days=1)).strftime('%d/%m/%Y')
-        else:
-            search_date = block_time_ny.strftime('%d/%m/%Y')
-        http = urllib3.PoolManager()
-        lotto = http.request('GET', 'http://nylottery.ny.gov/wps/PA_NYSLNumberCruncher/NumbersServlet?game=quick&action=winningnumbers&startSearchDate='+search_date+'&endSearchDate=&pageNo=&last=&perPage=999&sort=').data
-        lotto = lotto.decode("utf-8")
-        lotto = json.loads(lotto)
-        for draw in lotto['draw']:
-            draw_time =  datetime.strptime(draw['date'], '%m/%d/%Y %H:%M').replace(tzinfo=ny_zone)
-            if draw_time>block_time_ny:
-                numbers = draw['numbersDrawn']
-                N = combinations(80,20)
-                n = 0
-                i = 1
-                for number in numbers:
-                    n += combinations(number-1,i)
-                    i += 1
-                roll1 = n/(N-1)
-                roll2 = (int(bet['tx_hash'][10:],16) % 1000000000)/1000000000.0
-                roll = (roll1 + roll2) % 1
-                roll = roll * 100.0
-                chance, payout, bet_amount, cha_supply = bet['chance'], bet['payout'], bet['bet'], bet['cha_supply']
-                if roll<chance:
-                    # the bet is a winner
-                    # the gambler wins b*(p*(1-e)-1)*c/(c-b*p*(1-e)) CHA, but we already debited b CHA earlier
-                    # also note that the (1-e) is already factored into the payout
-                    profit = int(bet_amount*(payout-1)*cha_supply/(cha_supply-bet_amount*payout))
-                    credit = profit + bet_amount
-                    util.credit(db, bet['block_index'], bet['source'], 'CHA', credit)
-                else:
-                    # the bet is a loser
-                    profit = -bet_amount
-                bindings = {
-                    'profit': profit,
-                    'tx_index': bet['tx_index']
-                }
-                sql='update bets set profit = :profit where tx_index = :tx_index'
-                cursor.execute(sql, bindings)
-                break
-        roll = 0
-
+            if block_time_ny.hour>=23 and block_time_ny.minute>=56:
+                search_date = (block_time_ny+timedelta(days=1)).strftime('%d/%m/%Y')
+            else:
+                search_date = block_time_ny.strftime('%d/%m/%Y')
+            http = urllib3.PoolManager()
+            lotto = http.request('GET', 'http://nylottery.ny.gov/wps/PA_NYSLNumberCruncher/NumbersServlet?game=quick&action=winningnumbers&startSearchDate='+search_date+'&endSearchDate=&pageNo=&last=&perPage=999&sort=').data
+            lotto = lotto.decode("utf-8")
+            lotto = json.loads(lotto)
+            for draw in lotto['draw']:
+                draw_time =  datetime.strptime(draw['date'], '%m/%d/%Y %H:%M').replace(tzinfo=ny_zone)
+                if draw_time.replace(tzinfo=ny_zone)>block_time_ny.replace(tzinfo=ny_zone):
+                    numbers = draw['numbersDrawn']
+                    N = combinations(80,20)
+                    n = 0
+                    i = 1
+                    for number in numbers:
+                        n += combinations(number-1,i)
+                        i += 1
+                    roll1 = n/(N-1)
+                    roll2 = (int(bet['tx_hash'][10:],16) % 1000000000)/1000000000.0
+                    roll = (roll1 + roll2) % 1
+                    roll = roll * 100.0
+                    chance, payout, bet_amount, cha_supply = bet['chance'], bet['payout'], bet['bet'], bet['cha_supply']
+                    if roll<chance:
+                        # the bet is a winner
+                        # the gambler wins b*(p*(1-e)-1)*c/(c-b*p*(1-e)) CHA, but we already debited b CHA earlier
+                        # also note that the (1-e) is already factored into the payout
+                        profit = int(bet_amount*(payout-1)*cha_supply/(cha_supply-bet_amount*payout))
+                        credit = profit + bet_amount
+                        util.credit(db, bet['block_index'], bet['source'], 'CHA', credit)
+                    else:
+                        # the bet is a loser
+                        profit = -bet_amount
+                    bindings = {
+                        'profit': profit,
+                        'tx_index': bet['tx_index']
+                    }
+                    sql='update bets set profit = :profit where tx_index = :tx_index'
+                    cursor.execute(sql, bindings)
+                    break
+            roll = 0
+    except:
+        logging.error(sys.exc_info())    
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
