@@ -17,7 +17,7 @@ ID = 70
 def validate (db, offer_hash, source=None):
     problems = []
 
-    for offer in util.get_orders(db, validity='valid') + util.get_bets(db, validity='valid'):
+    for offer in util.get_orders(db, validity='valid'):
         if offer_hash == offer['tx_hash']:
             if source == offer['source']:
                 return source, offer, problems
@@ -64,9 +64,6 @@ def parse (db, tx, message):
         cursor.execute('''SELECT * FROM orders \
                           WHERE (tx_hash=? AND source=? AND validity=?)''', (offer_hash, tx['source'], 'valid'))
         orders = cursor.fetchall()
-        cursor.execute('''SELECT * FROM bets \
-                          WHERE (tx_hash=? AND source=? AND validity=?)''', (offer_hash, tx['source'], 'valid'))
-        bets = cursor.fetchall()
 
         # Cancel if order.
         if orders:
@@ -82,21 +79,6 @@ def parse (db, tx, message):
 
             if order['give_asset'] != 'BTC':
                 util.credit(db, tx['block_index'], tx['source'], order['give_asset'], order['give_remaining'])
-        # Cancel if bet.
-        elif bets:
-            bet = bets[0]
-
-            # Update validity of bet.
-            bindings = {
-                'validity': 'cancelled',
-                'tx_hash': bet['tx_hash']
-            }
-            sql='update bets set validity = :validity where tx_hash = :tx_hash'
-            cursor.execute(sql, bindings)
-
-            util.credit(db, tx['block_index'], tx['source'], 'CHA', bet['wager_remaining'])
-            util.credit(db, tx['block_index'], tx['source'], 'CHA', round(bet['wager_amount'] * bet['fee_multiplier'] / 1e8))
-        # If neither order or bet, mark as invalid.
         else:
             validity = 'invalid: no valid offer with that hash from that address'
 
