@@ -171,5 +171,5 @@ def resolve(db):
                     break
             roll = 0
     except:
-        logging.error(sys.exc_info())    
+        logging.error(sys.exc_info())
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

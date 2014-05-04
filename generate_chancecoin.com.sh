@@ -1,4 +1,4 @@
-python3.2 setup.py bdist_dmg
+#python3.2 setup.py bdist_dmg
 cp templates/template.html templates/template_temp.html
 cp templates/template_chancecoin.com.html templates/template.html
 cp templates/index.html templates/index_temp.html
